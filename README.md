@@ -331,6 +331,60 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 | `NEXTAUTH_SECRET` | NextAuth 서명 비밀키 | |
 | `GOOGLE_CLIENT_ID` | Google OAuth 클라이언트 ID | |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth 클라이언트 시크릿 | |
+| `JWT_SECRET` | JWT 서명 비밀키 (백엔드와 동일) | |
+
+---
+
+## Google OAuth 설정 가이드
+
+Google Cloud Console에서 OAuth 2.0 클라이언트 ID와 시크릿을 발급받는 방법입니다.
+
+### 1. Google Cloud 프로젝트 생성
+
+1. [Google Cloud Console](https://console.cloud.google.com/)에 접속
+2. 상단 프로젝트 선택 드롭다운 → **새 프로젝트** 클릭
+3. 프로젝트 이름 입력 (예: `noema`) → **만들기**
+
+### 2. OAuth 동의 화면 구성
+
+1. 좌측 메뉴: **API 및 서비스** → **OAuth 동의 화면**
+2. User Type: **외부** 선택 → **만들기**
+3. 앱 정보 입력:
+   - **앱 이름**: `Noema`
+   - **사용자 지원 이메일**: 본인 이메일
+   - **개발자 연락처 정보**: 본인 이메일
+4. **저장 후 계속**
+5. 범위(Scopes) 페이지:
+   - **범위 추가 또는 삭제** 클릭
+   - `email`, `profile`, `openid` 선택 → **업데이트**
+   - **저장 후 계속**
+6. 테스트 사용자 페이지:
+   - **사용자 추가** → 테스트에 사용할 Google 계정 이메일 입력
+   - **저장 후 계속**
+
+### 3. OAuth 2.0 클라이언트 ID 생성
+
+1. 좌측 메뉴: **API 및 서비스** → **사용자 인증 정보**
+2. 상단 **+ 사용자 인증 정보 만들기** → **OAuth 클라이언트 ID**
+3. 애플리케이션 유형: **웹 애플리케이션**
+4. 이름: `Noema Web Client`
+5. **승인된 JavaScript 원본** 추가:
+   - `http://localhost:3000` (개발 환경)
+6. **승인된 리디렉션 URI** 추가:
+   - `http://localhost:3000/api/auth/callback/google` (개발 환경)
+   - 프로덕션 배포 시: `https://your-domain.com/api/auth/callback/google`
+7. **만들기** 클릭
+
+### 4. 키 복사
+
+생성 완료 후 표시되는 값을 `frontend/.env.local`에 입력합니다:
+
+```env
+GOOGLE_CLIENT_ID=123456789-xxxxxxxxxx.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-xxxxxxxxxxxxxxxxxx
+```
+
+> **참고**: 개발 환경에서는 OAuth 동의 화면이 "테스트" 상태여도 테스트 사용자로 등록된 계정은 로그인이 가능합니다. 프로덕션 배포 시에는 동의 화면을 **게시** 상태로 변경해야 모든 Google 계정에서 로그인할 수 있습니다.
 
 ---
 
