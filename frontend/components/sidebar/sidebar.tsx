@@ -77,6 +77,32 @@ export default function Sidebar() {
     }
   };
 
+  // 페이지를 다른 부모로 이동 (드래그 앤 드롭 핸들러)
+  const handleMovePage = async (pageId: string, newParentId: string | null) => {
+    if (!token) return;
+    try {
+      await fetch(`${API_BASE_URL}/pages/${pageId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ parent_page_id: newParentId }),
+      });
+      // 페이지 목록 새로고침
+      const res = await fetch(
+        `${API_BASE_URL}/pages?workspace_id=${currentWorkspace?.id}`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setPages(data.pages);
+      }
+    } catch (err) {
+      console.error("페이지 이동 실패:", err);
+    }
+  };
+
   // 현재 페이지의 그래프 뷰로 이동
   const handleGraphView = () => {
     if (currentPageId) {
@@ -121,20 +147,37 @@ export default function Sidebar() {
         ) : pages.length === 0 ? (
           <div className="p-3 text-sm text-gray-400">페이지가 없습니다</div>
         ) : (
-          <ul className="space-y-0.5">
-            {/* 최상위 페이지만 렌더링 (자식은 PageTreeItem 내부에서 재귀 처리) */}
-            {pages
-              .filter((p) => !p.parent_page_id)
-              .map((page) => (
-                <PageTreeItem
-                  key={page.id}
-                  page={page}
-                  pages={pages}
-                  currentPageId={currentPageId}
-                  depth={0}
-                />
-              ))}
-          </ul>
+          <>
+            <ul className="space-y-0.5">
+              {/* 최상위 페이지만 렌더링 (자식은 PageTreeItem 내부에서 재귀 처리) */}
+              {pages
+                .filter((p) => !p.parent_page_id)
+                .map((page) => (
+                  <PageTreeItem
+                    key={page.id}
+                    page={page}
+                    pages={pages}
+                    currentPageId={currentPageId}
+                    depth={0}
+                    onMove={handleMovePage}
+                  />
+                ))}
+            </ul>
+            {/* 최상위로 이동하기 위한 드롭존 */}
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                const draggedPageId = e.dataTransfer.getData("text/plain");
+                if (draggedPageId) handleMovePage(draggedPageId, null);
+              }}
+              className="border-t border-dashed border-gray-200 p-2 text-center text-xs text-gray-300"
+            >
+              여기에 드롭하여 최상위로 이동
+            </div>
+          </>
         )}
       </nav>
 

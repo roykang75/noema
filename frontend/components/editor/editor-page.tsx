@@ -4,6 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Block } from "@blocknote/core";
 import BlockEditor from "./block-editor";
+import YouTubeEmbed, { YouTubePlayer } from "./youtube-embed";
+import SummarizeButton from "@/components/ai/summarize-button";
+import AIChatPanel from "@/components/ai/ai-chat-panel";
 
 interface EditorPageProps {
   pageId: string;
@@ -21,6 +24,8 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
   const [title, setTitle] = useState(pageTitle);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showChat, setShowChat] = useState(false);
+  const [youtubeEmbeds, setYoutubeEmbeds] = useState<string[]>([]);
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -122,35 +127,73 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
   }
 
   return (
-    <div className="mx-auto max-w-4xl p-6">
-      {/* 페이지 타이틀 */}
-      <input
-        type="text"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        onBlur={(e) => handleTitleSave(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            handleTitleSave(title);
-            (e.target as HTMLInputElement).blur();
-          }
-        }}
-        placeholder="제목 없음"
-        className="mb-4 w-full border-none bg-transparent text-3xl font-bold text-gray-900 placeholder-gray-300 outline-none"
-      />
+    <div className="flex h-full">
+      {/* 메인 에디터 영역 */}
+      <div className="mx-auto flex-1 max-w-4xl p-6">
+        {/* 페이지 타이틀 */}
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onBlur={(e) => handleTitleSave(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleTitleSave(title);
+              (e.target as HTMLInputElement).blur();
+            }
+          }}
+          placeholder="제목 없음"
+          className="mb-4 w-full border-none bg-transparent text-3xl font-bold text-gray-900 placeholder-gray-300 outline-none"
+        />
 
-      {/* 저장 상태 표시 */}
-      <div className="mb-2 flex items-center gap-2 text-xs text-gray-400">
-        {saving && <span>저장 중...</span>}
-        {error && <span className="text-red-500">{error}</span>}
+        {/* AI 툴바 */}
+        <div className="mb-3 flex items-center gap-3">
+          <SummarizeButton pageId={pageId} />
+          <button
+            onClick={() => setShowChat((v) => !v)}
+            className={`rounded-md px-3 py-1.5 text-sm ${
+              showChat
+                ? "bg-gray-900 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            💬 AI 질문
+          </button>
+
+          {/* YouTube 임베드 삽입 */}
+          <YouTubeEmbed
+            onInsert={(embedUrl) =>
+              setYoutubeEmbeds((prev) => [...prev, embedUrl])
+            }
+          />
+
+          {/* 저장 상태 표시 */}
+          <div className="ml-auto flex items-center gap-2 text-xs text-gray-400">
+            {saving && <span>저장 중...</span>}
+            {error && <span className="text-red-500">{error}</span>}
+          </div>
+        </div>
+
+        {/* BlockNote 에디터 */}
+        <BlockEditor
+          pageId={pageId}
+          onSave={handleSave}
+        />
+
+        {/* 삽입된 YouTube 동영상 */}
+        {youtubeEmbeds.map((embedUrl, index) => (
+          <YouTubePlayer key={index} embedUrl={embedUrl} />
+        ))}
       </div>
 
-      {/* BlockNote 에디터 */}
-      <BlockEditor
-        pageId={pageId}
-        onSave={handleSave}
-      />
+      {/* AI 질문 사이드 패널 */}
+      {showChat && (
+        <AIChatPanel
+          pageId={pageId}
+          onClose={() => setShowChat(false)}
+        />
+      )}
     </div>
   );
 }
