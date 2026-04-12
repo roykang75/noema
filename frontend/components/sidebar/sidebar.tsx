@@ -12,10 +12,9 @@ import { useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import { usePageStore } from "@/lib/stores/page-store";
+import { useWorkspaceStore } from "@/lib/stores/workspace-store";
 import PageTreeItem from "./page-tree-item";
-
-// 임시 워크스페이스 ID (워크스페이스 관리 구현 전까지 고정값 사용)
-const WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
+import WorkspaceSelector from "./workspace-selector";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -25,18 +24,19 @@ export default function Sidebar() {
   const params = useParams();
   const currentPageId = params?.id as string | undefined;
   const { pages, loading, setPages, setLoading, addPage } = usePageStore();
+  const { currentWorkspace } = useWorkspaceStore();
 
   // session.accessToken은 types/next-auth.d.ts에서 타입 확장됨
   const token = session?.accessToken;
 
-  // 페이지 목록 초기 로드
+  // 현재 워크스페이스가 바뀔 때마다 페이지 목록 다시 로드
   useEffect(() => {
     async function loadPages() {
-      if (!token) return;
+      if (!token || !currentWorkspace) return;
       setLoading(true);
       try {
         const res = await fetch(
-          `${API_BASE_URL}/pages?workspace_id=${WORKSPACE_ID}`,
+          `${API_BASE_URL}/pages?workspace_id=${currentWorkspace.id}`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
         if (res.ok) {
@@ -50,11 +50,11 @@ export default function Sidebar() {
       }
     }
     loadPages();
-  }, [token, setPages, setLoading]);
+  }, [token, currentWorkspace, setPages, setLoading]);
 
   // 새 페이지 생성 후 해당 페이지로 이동
   const handleCreatePage = async () => {
-    if (!token) return;
+    if (!token || !currentWorkspace) return;
     try {
       const res = await fetch(`${API_BASE_URL}/pages`, {
         method: "POST",
@@ -63,7 +63,7 @@ export default function Sidebar() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          workspace_id: WORKSPACE_ID,
+          workspace_id: currentWorkspace.id,
           title: "새 페이지",
         }),
       });
@@ -92,6 +92,9 @@ export default function Sidebar() {
       <div className="flex items-center border-b p-4">
         <span className="text-lg font-bold text-gray-900">Noema</span>
       </div>
+
+      {/* 워크스페이스 선택기 */}
+      <WorkspaceSelector />
 
       {/* 액션 버튼 */}
       <div className="flex gap-2 border-b p-3">
