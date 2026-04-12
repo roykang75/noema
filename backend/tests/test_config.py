@@ -10,7 +10,9 @@ def test_settings_default_values():
         NEO4J_PASSWORD="test",
         REDIS_URL="redis://localhost:6379",
         JWT_SECRET="test_secret",
+        ANTHROPIC_API_KEY="sk-ant-test",
+        VOYAGE_API_KEY="pa-test",
     )
     assert settings.DATABASE_URL == "postgresql+asyncpg://test:test@localhost:5432/test"
-    assert settings.NEO4J_URI == "bolt://localhost:7687"
-    assert settings.JWT_SECRET == "test_secret"
+    assert settings.ANTHROPIC_API_KEY == "sk-ant-test"
+    assert settings.VOYAGE_API_KEY == "pa-test"

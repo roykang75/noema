@@ -20,8 +20,11 @@ class Settings(BaseSettings):
     # JWT
     JWT_SECRET: str
 
-    # Anthropic (선택)
-    ANTHROPIC_API_KEY: str = ""
+    # Anthropic
+    ANTHROPIC_API_KEY: str
+
+    # Voyage AI
+    VOYAGE_API_KEY: str
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
