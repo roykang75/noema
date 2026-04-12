@@ -62,6 +62,7 @@ def test_page_model_columns():
     expected = {
         "id", "workspace_id", "parent_page_id", "title", "icon",
         "is_deleted", "created_by", "created_at", "updated_at",
+        "embedding",
     }
     assert column_names == expected
 

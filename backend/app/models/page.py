@@ -3,6 +3,7 @@
 import uuid
 from datetime import datetime
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import Boolean, DateTime, ForeignKey, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -38,6 +39,9 @@ class Page(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         onupdate=func.now(),
         nullable=False,
     )
+
+    # 페이지 전체 텍스트 임베딩 — 유사도 검색용
+    embedding = mapped_column(Vector(1536), nullable=True)
 
     workspace = relationship("Workspace", backref="pages")
     creator = relationship("User", backref="created_pages")
