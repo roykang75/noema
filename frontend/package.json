@@ -9,6 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@blocknote/core": "^0.47.3",
+    "@blocknote/mantine": "^0.47.3",
+    "@blocknote/react": "^0.47.3",
     "jsonwebtoken": "^9.0.3",
     "next": "16.2.3",
     "next-auth": "^5.0.0-beta.30",

@@ -1,14 +1,16 @@
+import EditorPage from "@/components/editor/editor-page";
+
+/**
+ * 워크스페이스 문서 에디터 페이지
+ * - URL 파라미터에서 페이지 ID를 추출
+ * - EditorPage 클라이언트 컴포넌트에 위임
+ */
 export default async function WorkspacePage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return (
-    <div className="p-6">
-      <h1 className="text-xl font-semibold">문서 에디터</h1>
-      <p className="mt-2 text-gray-500">Page ID: {id}</p>
-      {/* BlockNote 에디터 — Step 4에서 구현 */}
-    </div>
-  );
+
+  return <EditorPage pageId={id} pageTitle="" />;
 }
