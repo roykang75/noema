@@ -16,6 +16,7 @@ dependencies = [
     "anthropic>=0.40.0",
     "voyageai>=0.3.0",
     "sse-starlette>=2.0.0",
+    "pyjwt>=2.0.0",
 ]
 
 [project.optional-dependencies]

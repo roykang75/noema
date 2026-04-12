@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.ai import router as ai_router
+from app.api.auth import router as auth_router
 from app.db.postgres import async_engine
 
 
@@ -34,6 +35,7 @@ app.add_middleware(
 
 
 app.include_router(ai_router)
+app.include_router(auth_router)
 
 
 @app.get("/health")
