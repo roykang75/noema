@@ -44,7 +44,7 @@ Notion을 대체하는 팀용 지식 관리 도구입니다.
   - 자동 관계 추출 (문서 간 SIMILAR_TO 엣지 생성)
   - 글쓰기 보조 (완성, 개선, 번역)
   - 멀티 문서 질의 (연결된 문서들을 따라가며 답변)
-- **임베딩**: Anthropic Embeddings API → pgvector 저장
+- **임베딩**: Voyage AI (voyage-3) → pgvector 저장
 
 ### 인프라
 - **배포**: Docker Compose (셀프호스팅)
@@ -301,6 +301,9 @@ REDIS_URL=redis://redis:6379
 
 # Anthropic
 ANTHROPIC_API_KEY=
+
+# Voyage AI (임베딩)
+VOYAGE_API_KEY=
 
 # NextAuth
 NEXTAUTH_SECRET=
