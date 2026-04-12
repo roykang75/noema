@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.ai import router as ai_router
 from app.api.auth import router as auth_router
+from app.api.blocks import router as blocks_router
 from app.api.pages import router as pages_router
 from app.db.postgres import async_engine
 
@@ -37,6 +38,7 @@ app.add_middleware(
 
 app.include_router(ai_router)
 app.include_router(auth_router)
+app.include_router(blocks_router)
 app.include_router(pages_router)
 
 
