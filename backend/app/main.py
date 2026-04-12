@@ -10,6 +10,7 @@ from app.api.auth import router as auth_router
 from app.api.blocks import router as blocks_router
 from app.api.graph import router as graph_router
 from app.api.pages import router as pages_router
+from app.api.workspace import router as workspace_router
 from app.db.postgres import async_engine
 
 
@@ -42,6 +43,7 @@ app.include_router(auth_router)
 app.include_router(blocks_router)
 app.include_router(graph_router)
 app.include_router(pages_router)
+app.include_router(workspace_router)
 
 
 @app.get("/health")
