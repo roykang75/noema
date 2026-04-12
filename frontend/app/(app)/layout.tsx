@@ -1,10 +1,14 @@
+/**
+ * 인증 필요 페이지 공통 레이아웃
+ * 사이드바 + 메인 콘텐츠 영역으로 구성
+ */
+
+import Sidebar from "@/components/sidebar/sidebar";
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen">
-      {/* 사이드바 — Step 4에서 구현 */}
-      <aside className="w-64 border-r bg-gray-50">
-        <div className="p-4 font-bold">Noema</div>
-      </aside>
+      <Sidebar />
       <main className="flex-1 overflow-auto">{children}</main>
     </div>
   );
