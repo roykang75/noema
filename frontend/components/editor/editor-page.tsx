@@ -4,13 +4,24 @@ import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Block, PartialBlock } from "@blocknote/core";
 import BlockEditor from "./block-editor";
-import YouTubeEmbed, { YouTubePlayer } from "./youtube-embed";
+import { YouTubePlayer } from "./youtube-embed";
 import SummarizeButton from "@/components/ai/summarize-button";
 import AIChatPanel from "@/components/ai/ai-chat-panel";
 
 interface EditorPageProps {
   pageId: string;
   pageTitle: string;
+}
+
+/**
+ * YouTube URL에서 video ID를 추출. 매칭 실패 시 null 반환.
+ */
+function extractYouTubeId(text: string): string | null {
+  const trimmed = text.trim();
+  const pattern =
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/;
+  const match = trimmed.match(pattern);
+  return match ? match[1] : null;
 }
 
 /**
@@ -229,25 +240,35 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
             💬 AI 질문
           </button>
 
-          <YouTubeEmbed
-            onInsert={(embedUrl) =>
-              setYoutubeEmbeds((prev) => [...prev, embedUrl])
-            }
-          />
-
           <div className="ml-auto flex items-center gap-2 text-xs text-gray-400">
             {saving && <span>저장 중...</span>}
             {error && <span className="text-red-500">{error}</span>}
           </div>
         </div>
 
-        {/* BlockNote 에디터 — pageId가 바뀌면 재마운트하여 새 initialContent 적용 */}
-        <BlockEditor
-          key={pageId}
-          pageId={pageId}
-          initialBlocks={initialBlocks.length > 0 ? initialBlocks : undefined}
-          onSave={handleSave}
-        />
+        {/* BlockNote 에디터 — pageId가 바뀌면 재마운트하여 새 initialContent 적용
+            onPaste: YouTube URL이 붙여넣기되면 자동으로 임베드 플레이어로 변환 */}
+        <div
+          onPaste={(e) => {
+            const pasted = e.clipboardData.getData("text/plain");
+            const videoId = extractYouTubeId(pasted);
+            if (videoId) {
+              e.preventDefault();
+              e.stopPropagation();
+              setYoutubeEmbeds((prev) => [
+                ...prev,
+                `https://www.youtube.com/embed/${videoId}`,
+              ]);
+            }
+          }}
+        >
+          <BlockEditor
+            key={pageId}
+            pageId={pageId}
+            initialBlocks={initialBlocks.length > 0 ? initialBlocks : undefined}
+            onSave={handleSave}
+          />
+        </div>
 
         {youtubeEmbeds.map((embedUrl, index) => (
           <YouTubePlayer key={index} embedUrl={embedUrl} />
