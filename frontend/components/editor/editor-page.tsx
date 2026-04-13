@@ -157,21 +157,37 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
       // BlockNote 기본 image 블록으로 YouTube 썸네일 삽입
       const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
       const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+      const imageBlock = {
+        type: "image",
+        props: { url: thumbnailUrl, caption: watchUrl },
+      };
+
       const cursor = editor.getTextCursorPosition();
-      editor.insertBlocks(
-        [
-          {
-            type: "image",
-            props: {
-              url: thumbnailUrl,
-              caption: watchUrl,
-            },
-          },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ] as any,
-        cursor.block,
-        "after",
-      );
+      const currentBlock = cursor.block;
+
+      // 현재 블록이 빈 paragraph이면 교체, 내용이 있으면 아래에 삽입
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const blockContent = (currentBlock as any).content;
+      const isEmptyParagraph =
+        currentBlock.type === "paragraph" &&
+        (Array.isArray(blockContent)
+          ? blockContent.length === 0
+          : !blockContent);
+
+      if (isEmptyParagraph) {
+        editor.replaceBlocks(
+          [currentBlock.id],
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          [imageBlock] as any,
+        );
+      } else {
+        editor.insertBlocks(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          [imageBlock] as any,
+          currentBlock,
+          "after",
+        );
+      }
     };
 
     document.addEventListener("paste", handlePaste, { capture: true });
