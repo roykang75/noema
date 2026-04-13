@@ -77,28 +77,34 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-  // YouTube URL 자동 감지 — ProseMirror가 처리하기 전에 가로채기 위해 capture phase 사용
+  // YouTube URL 자동 감지 — document 레벨 capture로 ProseMirror보다 먼저 가로챔
   useEffect(() => {
-    const container = editorContainerRef.current;
-    if (!container) return;
-
     const handlePaste = (e: ClipboardEvent) => {
+      const container = editorContainerRef.current;
+      if (!container) return;
+      // 에디터 영역 내부에서 붙여넣은 경우만 처리
+      const target = e.target as Node | null;
+      if (!target || !container.contains(target)) return;
+
       const pasted = e.clipboardData?.getData("text/plain") ?? "";
       const videoId = extractYouTubeId(pasted);
-      if (videoId) {
-        e.preventDefault();
-        e.stopPropagation();
-        setYoutubeEmbeds((prev) => [
-          ...prev,
-          `https://www.youtube.com/embed/${videoId}`,
-        ]);
-      }
+      if (!videoId) return;
+
+      // ProseMirror를 포함한 모든 리스너 차단
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+
+      setYoutubeEmbeds((prev) => [
+        ...prev,
+        `https://www.youtube.com/embed/${videoId}`,
+      ]);
     };
 
-    // capture: true → 캡처 단계에서 먼저 실행되어 ProseMirror보다 우선
-    container.addEventListener("paste", handlePaste, { capture: true });
+    // document + capture + 최우선 실행을 위해 stopImmediatePropagation 사용
+    document.addEventListener("paste", handlePaste, { capture: true });
     return () => {
-      container.removeEventListener("paste", handlePaste, { capture: true });
+      document.removeEventListener("paste", handlePaste, { capture: true });
     };
   }, []);
 
