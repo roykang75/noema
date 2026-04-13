@@ -262,8 +262,9 @@ function EmbedLayout({
     <div
       className="my-2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
       style={{
-        width: "calc(100% + 108px)",
-        marginLeft: "-54px",
+        // 이전 848px에서 약 10% 줄임 (→ 약 760px)
+        width: "calc(100% + 20px)",
+        marginLeft: "-10px",
       }}
     >
       <div className="relative aspect-video w-full bg-black">
