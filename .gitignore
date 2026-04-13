@@ -27,3 +27,10 @@ neo4j_data/
 
 # OMC
 .omc/
+
+# 런타임 (start.sh/stop.sh)
+.run/
+logs/
+
+# 업로드 파일
+backend/uploads/
