@@ -420,6 +420,10 @@ function YouTubeCard({
       ref={containerRef}
       contentEditable={false}
       suppressContentEditableWarning
+      // 블록 내부 클릭이 BlockNote/ProseMirror로 전파되어 중복 처리되는 것을 방지
+      // (small/medium/card 모드에서 링크 클릭 시 2개 탭이 열리던 버그)
+      onClickCapture={(e) => e.stopPropagation()}
+      onMouseDownCapture={(e) => e.stopPropagation()}
     >
       {body}
     </div>
