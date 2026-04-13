@@ -37,9 +37,12 @@ interface BackendBlock {
         text?: Array<{ text?: string }>;
         props?: Record<string, unknown>;
         videoId?: string;
+        displayMode?: string;
       }
     | null;
 }
+
+const VALID_DISPLAY_MODES = new Set(["small", "medium", "card", "embed"]);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SchemaBlock = any;
@@ -64,16 +67,17 @@ function backendBlocksToPartial(blocks: BackendBlock[]): SchemaBlock[] {
   return blocks.map((block) => {
     const rawType = block.type ?? "paragraph";
 
-    // YouTube 커스텀 블록 — videoId 유효성 검증
+    // YouTube 커스텀 블록 — videoId 유효성 검증 + displayMode 복원
     if (rawType === "youtube") {
       const videoId = block.content?.videoId ?? "";
       if (!VIDEO_ID_RE.test(videoId)) {
-        // 손상된 videoId는 paragraph로 폴백하여 데이터 유실 방지
         return { type: "paragraph", content: "" } as SchemaBlock;
       }
+      const rawMode = block.content?.displayMode ?? "embed";
+      const displayMode = VALID_DISPLAY_MODES.has(rawMode) ? rawMode : "embed";
       return {
         type: "youtube",
-        props: { videoId },
+        props: { videoId, displayMode },
       } as SchemaBlock;
     }
 
@@ -174,10 +178,10 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
       e.stopPropagation();
       e.stopImmediatePropagation();
 
-      // 커스텀 YouTube 블록 삽입 (썸네일 + 재생 버튼 + 메타데이터 카드)
+      // 커스텀 YouTube 블록 삽입 (기본 displayMode: embed)
       const youtubeBlock = {
         type: "youtube",
-        props: { videoId },
+        props: { videoId, displayMode: "embed" },
       };
 
       const cursor = editor.getTextCursorPosition();
@@ -231,10 +235,9 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
           content?: unknown;
           props?: Record<string, unknown>;
         }>).map((block, index) => {
-          // YouTube 블록 — videoId 검증 후 저장
+          // YouTube 블록 — videoId 검증 + displayMode 저장
           if (block.type === "youtube") {
             const vid = String(block.props?.videoId ?? "");
-            // 손상된 videoId는 빈 paragraph로 저장 (원본 데이터 유실 방지는 프론트 렌더에서)
             if (!VIDEO_ID_RE.test(vid)) {
               return {
                 page_id: pageId,
@@ -243,10 +246,14 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
                 order: index,
               };
             }
+            const rawMode = String(block.props?.displayMode ?? "embed");
+            const displayMode = VALID_DISPLAY_MODES.has(rawMode)
+              ? rawMode
+              : "embed";
             return {
               page_id: pageId,
               type: "youtube",
-              content: { videoId: vid },
+              content: { videoId: vid, displayMode },
               order: index,
             };
           }

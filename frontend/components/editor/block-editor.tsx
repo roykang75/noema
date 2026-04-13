@@ -8,6 +8,7 @@ import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
 import { youtubeBlockSpec } from "./youtube-block";
 import { useBlockSelectionStore } from "@/lib/stores/block-selection-store";
+import { useEditorInstanceStore } from "@/lib/stores/editor-instance-store";
 
 /**
  * 커스텀 스키마 — 기본 블록 + YouTube 블록
@@ -66,6 +67,11 @@ export default function BlockEditor({
 
   useEffect(() => {
     onEditorReady?.(editor);
+    // 하단 툴바가 editor.updateBlock을 호출할 수 있도록 전역 스토어에도 등록
+    useEditorInstanceStore.getState().setEditor(editor);
+    return () => {
+      useEditorInstanceStore.getState().setEditor(null);
+    };
   }, [editor, onEditorReady]);
 
   // 커서가 위치한 블록을 추적 — 하단 contextual 툴바에서 활용

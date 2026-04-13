@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     # Voyage AI
     VOYAGE_API_KEY: str
 
+    # YouTube Data API v3 (선택) — 설정 시 조회수/좋아요/재생시간 등 풍부한 메타데이터
+    YOUTUBE_API_KEY: str = ""
+
     # 프로젝트 루트의 .env를 공유 — 프론트엔드 전용 변수(NEXTAUTH_*, GOOGLE_*, NEXT_PUBLIC_* 등)는 무시
     model_config = {
         "env_file": ".env",
