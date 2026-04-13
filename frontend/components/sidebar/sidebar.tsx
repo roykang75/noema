@@ -119,7 +119,7 @@ export default function Sidebar() {
     loadPages();
   }, [token, workspaceId, setPages, setLoading]);
 
-  const handleCreatePage = async () => {
+  const createPage = async (parentPageId: string | null) => {
     if (!token || !workspaceId) return;
     try {
       const res = await fetch(`${API_BASE_URL}/pages`, {
@@ -128,7 +128,11 @@ export default function Sidebar() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ workspace_id: workspaceId, title: "새 페이지" }),
+        body: JSON.stringify({
+          workspace_id: workspaceId,
+          title: "새 페이지",
+          ...(parentPageId ? { parent_page_id: parentPageId } : {}),
+        }),
       });
       if (res.ok) {
         const page = await res.json();
@@ -139,6 +143,9 @@ export default function Sidebar() {
       console.error("페이지 생성 실패:", err);
     }
   };
+
+  const handleCreatePage = () => createPage(null);
+  const handleAddChildPage = (parentId: string) => createPage(parentId);
 
   const handleMovePage = async (pageId: string, newParentId: string | null) => {
     if (!token || !workspaceId) return;
@@ -253,6 +260,7 @@ export default function Sidebar() {
                     currentPageId={currentPageId}
                     depth={0}
                     onMove={handleMovePage}
+                    onAddChild={handleAddChildPage}
                   />
                 ))}
             </ul>
