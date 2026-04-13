@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import BlockEditor, { type NoemaEditor } from "./block-editor";
+import BottomToolbar from "./bottom-toolbar";
 import AIChatPanel from "@/components/ai/ai-chat-panel";
 import { useAIChatStore } from "@/lib/stores/ai-chat-store";
 
@@ -369,6 +370,9 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
       {showChat && (
         <AIChatPanel pageId={pageId} onClose={closeChat} />
       )}
+
+      {/* 하단 고정 툴바 + 어시스턴트 버튼 */}
+      <BottomToolbar />
     </div>
   );
 }

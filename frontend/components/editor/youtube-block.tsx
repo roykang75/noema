@@ -14,10 +14,8 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-// containerRef는 메타데이터/레이아웃 구조 상 유지 (향후 선택 상태 추적 재도입 시 활용)
 import { useSession } from "next-auth/react";
 import { createReactBlockSpec } from "@blocknote/react";
-import { useAIChatStore } from "@/lib/stores/ai-chat-store";
 
 interface YouTubeMetadata {
   title: string;
@@ -41,120 +39,8 @@ function isSafeYouTubeUrl(url: string | undefined | null): url is string {
 }
 
 /**
- * 하단 툴바 — 블록이 선택되었을 때만 표시
- * 왼쪽부터:
- *   1. 새 창에서 재생 (동작)
- *   2. 작은 상태 (placeholder, 추후 구현)
- *   3. 보통 상태 (placeholder, 추후 구현)
- *   4. 카드 형태 (placeholder, 추후 구현)
- *   5. 임베드 (현재 활성 상태)
- *   ─── 구분
- *   어시스턴트 (AI 질문 패널 토글)
- */
-function YouTubeToolbar({ watchUrl }: { watchUrl: string }) {
-  const openChat = useAIChatStore((s) => s.open);
-
-  const iconBtn =
-    "flex h-8 w-8 items-center justify-center rounded-md text-gray-600 transition-colors hover:bg-gray-100";
-  const activeIconBtn =
-    "flex h-8 w-8 items-center justify-center rounded-md bg-blue-50 text-blue-600";
-
-  return (
-    <div
-      className="mt-1 flex items-center gap-0.5 rounded-lg border border-gray-200 bg-white p-1 shadow-sm"
-      contentEditable={false}
-      suppressContentEditableWarning
-      onMouseDown={(e) => e.stopPropagation()}
-    >
-      {/* 1. 새 창에서 재생 */}
-      <a
-        href={watchUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={iconBtn}
-        title="새 창에서 재생"
-        aria-label="새 창에서 재생"
-      >
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M14 3h7v7" />
-          <path d="M10 14L21 3" />
-          <path d="M21 14v7h-7" />
-          <path d="M3 10v11h11" />
-          <path d="M3 10L10 3" strokeOpacity="0" />
-          <path d="M10 3H3v7" />
-        </svg>
-      </a>
-
-      {/* 2. 작은 상태 (placeholder) */}
-      <button
-        type="button"
-        disabled
-        className={`${iconBtn} opacity-50 cursor-not-allowed`}
-        title="작은 상태 (추후 구현)"
-      >
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-          <rect x="3" y="7" width="18" height="4" rx="1" />
-          <rect x="3" y="13" width="18" height="4" rx="1" />
-        </svg>
-      </button>
-
-      {/* 3. 보통 상태 (placeholder) */}
-      <button
-        type="button"
-        disabled
-        className={`${iconBtn} opacity-50 cursor-not-allowed`}
-        title="보통 상태 (추후 구현)"
-      >
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-          <rect x="4" y="5" width="16" height="14" rx="2" />
-        </svg>
-      </button>
-
-      {/* 4. 카드 형태 (placeholder) */}
-      <button
-        type="button"
-        disabled
-        className={`${iconBtn} opacity-50 cursor-not-allowed`}
-        title="카드 형태 (추후 구현)"
-      >
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-          <rect x="3" y="7" width="14" height="10" rx="2" />
-          <rect x="7" y="3" width="14" height="10" rx="2" />
-        </svg>
-      </button>
-
-      {/* 5. 임베드 (현재 활성) */}
-      <button
-        type="button"
-        className={activeIconBtn}
-        title="임베드 (현재)"
-      >
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
-          <path d="M8 5v14l11-7z" />
-        </svg>
-      </button>
-
-      {/* 구분선 */}
-      <div className="mx-1 h-5 w-px bg-gray-200" />
-
-      {/* 어시스턴트 */}
-      <button
-        type="button"
-        onClick={() => openChat()}
-        className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-100"
-        title="AI 질문"
-      >
-        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-blue-500 text-[10px] text-white">
-          A
-        </span>
-        어시스턴트
-      </button>
-    </div>
-  );
-}
-
-/**
- * YouTube 임베드 카드 — 썸네일 + 재생 + 메타 카드 + 툴바
+ * YouTube 임베드 카드 — 썸네일 + 재생 + 메타 카드
+ * 툴바는 페이지 하단의 BottomToolbar가 selection store를 읽어 별도 렌더
  */
 function YouTubeCard({ videoId }: { videoId: string }) {
   const { data: session } = useSession();
@@ -215,10 +101,10 @@ function YouTubeCard({ videoId }: { videoId: string }) {
       ref={containerRef}
       contentEditable={false}
       suppressContentEditableWarning
-      className="group/yt my-2 w-full max-w-2xl"
+      className="my-2 w-full max-w-2xl"
     >
       {/* 메인 카드 */}
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-colors group-hover/yt:border-blue-300">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
 
         {/* 플레이어/썸네일 */}
         <div className="relative aspect-video w-full bg-black">
@@ -309,10 +195,6 @@ function YouTubeCard({ videoId }: { videoId: string }) {
         </div>
       </div>
 
-      {/* 하단 툴바 — 카드 hover 시 표시 */}
-      <div className="pointer-events-none opacity-0 transition-opacity duration-150 group-hover/yt:pointer-events-auto group-hover/yt:opacity-100">
-        <YouTubeToolbar watchUrl={watchUrl} />
-      </div>
     </div>
   );
 }

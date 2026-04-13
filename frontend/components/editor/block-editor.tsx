@@ -7,6 +7,7 @@ import { BlockNoteView } from "@blocknote/mantine";
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
 import { youtubeBlockSpec } from "./youtube-block";
+import { useBlockSelectionStore } from "@/lib/stores/block-selection-store";
 
 /**
  * 커스텀 스키마 — 기본 블록 + YouTube 블록
@@ -66,6 +67,36 @@ export default function BlockEditor({
   useEffect(() => {
     onEditorReady?.(editor);
   }, [editor, onEditorReady]);
+
+  // 커서가 위치한 블록을 추적 — 하단 contextual 툴바에서 활용
+  useEffect(() => {
+    const setSelection = useBlockSelectionStore.getState().setSelection;
+    const clear = useBlockSelectionStore.getState().clear;
+
+    const updateSelection = () => {
+      try {
+        const pos = editor.getTextCursorPosition();
+        const block = pos?.block;
+        if (block) {
+          setSelection(
+            String(block.type),
+            (block.props as Record<string, unknown>) ?? {},
+          );
+        } else {
+          clear();
+        }
+      } catch {
+        clear();
+      }
+    };
+
+    updateSelection();
+    const unsub = editor.onSelectionChange(updateSelection);
+    return () => {
+      unsub?.();
+      clear();
+    };
+  }, [editor]);
 
   useEffect(() => {
     if (readOnly || !onSave) return;
