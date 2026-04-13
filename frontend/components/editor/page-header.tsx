@@ -10,6 +10,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePageStore } from "@/lib/stores/page-store";
 import { useWorkspaceStore } from "@/lib/stores/workspace-store";
+import PageIcon from "@/components/sidebar/page-icon";
 import type { Page } from "@/types";
 
 interface PageHeaderProps {
@@ -68,9 +69,7 @@ export default function PageHeader({
               onClick={() => router.push(`/workspace/${p.id}`)}
               className="flex min-w-0 items-center gap-1 rounded px-1 py-0.5 transition-colors hover:bg-gray-100"
             >
-              <span className="flex-shrink-0 text-xs leading-none">
-                {p.icon || "📄"}
-              </span>
+              <PageIcon icon={p.icon} size={14} />
               <span className="truncate text-gray-600 hover:text-gray-900">
                 {p.title || "제목 없음"}
               </span>
@@ -81,9 +80,7 @@ export default function PageHeader({
         {/* 현재 페이지 */}
         <span className="text-gray-300">/</span>
         <div className="flex min-w-0 items-center gap-1 px-1 py-0.5">
-          <span className="flex-shrink-0 text-xs leading-none">
-            {pageIcon || "📄"}
-          </span>
+          <PageIcon icon={pageIcon || trail[trail.length - 1]?.icon} size={14} />
           <span className="min-w-0 truncate font-medium text-gray-900">
             {pageTitle || "제목 없음"}
           </span>

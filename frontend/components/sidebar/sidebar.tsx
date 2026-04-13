@@ -14,6 +14,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import { usePageStore } from "@/lib/stores/page-store";
 import { useWorkspaceStore } from "@/lib/stores/workspace-store";
+// usePageStore는 updatePage를 직접 호출하기 위해 컴포넌트 외부 호출에도 활용
 import WorkspaceSelector from "./workspace-selector";
 import PageTreeItem from "./page-tree-item";
 
@@ -147,6 +148,24 @@ export default function Sidebar() {
   const handleCreatePage = () => createPage(null);
   const handleAddChildPage = (parentId: string) => createPage(parentId);
 
+  // 페이지 아이콘 변경 — 스토어 낙관적 업데이트 + PATCH
+  const handleUpdateIcon = async (pageId: string, icon: string) => {
+    if (!token) return;
+    usePageStore.getState().updatePage(pageId, { icon });
+    try {
+      await fetch(`${API_BASE_URL}/pages/${pageId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ icon }),
+      });
+    } catch (err) {
+      console.error("아이콘 업데이트 실패:", err);
+    }
+  };
+
   const handleMovePage = async (pageId: string, newParentId: string | null) => {
     if (!token || !workspaceId) return;
     try {
@@ -261,6 +280,7 @@ export default function Sidebar() {
                     depth={0}
                     onMove={handleMovePage}
                     onAddChild={handleAddChildPage}
+                    onUpdateIcon={handleUpdateIcon}
                   />
                 ))}
             </ul>
