@@ -257,16 +257,9 @@ function EmbedLayout({
   videoId, meta, thumbnailUrl, watchUrl, safeAuthorUrl,
   playing, setPlaying,
 }: LayoutProps & { playing: boolean; setPlaying: (v: boolean) => void }) {
-  // BlockNote의 padding-inline(54px)를 뚫고 더 넓은 폭으로 렌더
+  // breakout은 outer wrapper(YouTubeCard)에서 처리 — 선택 outline이 카드 크기와 정확히 일치하도록
   return (
-    <div
-      className="my-2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
-      style={{
-        // 이전 848px에서 약 10% 줄임 (→ 약 760px)
-        width: "calc(100% + 20px)",
-        marginLeft: "-10px",
-      }}
-    >
+    <div className="my-2 w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
       <div className="relative aspect-video w-full bg-black">
         {playing ? (
           <iframe
@@ -451,6 +444,9 @@ function YouTubeCard({
     }
   };
 
+  // embed 모드만 breakout 적용 — 선택 outline(BlockNote CSS가 이 wrapper 기준으로 그림)도
+  // 함께 확장되어 카드 크기와 정확히 일치하도록 함
+  const isEmbed = displayMode === "embed";
   return (
     <div
       ref={containerRef}
@@ -458,9 +454,12 @@ function YouTubeCard({
       suppressContentEditableWarning
       onClickCapture={stopLinkClickPropagation}
       onMouseDownCapture={stopLinkClickPropagation}
-      // 부모(bn-block-content)가 display:flex이므로 flex item이 자식 콘텐츠 크기로
-      // 축소되는 것을 방지 — 전체 flex 공간을 채우도록 flex-grow 지정
-      style={{ flex: "1 1 auto", width: "100%", minWidth: 0 }}
+      style={{
+        flex: "1 1 auto",
+        minWidth: 0,
+        width: isEmbed ? "calc(100% + 20px)" : "100%",
+        marginLeft: isEmbed ? "-10px" : 0,
+      }}
     >
       {body}
     </div>
