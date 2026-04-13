@@ -43,11 +43,16 @@ class PageService:
         return result.scalar_one_or_none()
 
     async def list_by_workspace(
-        self, workspace_id: UUID, parent_page_id: UUID | None = None,
+        self,
+        workspace_id: UUID,
+        parent_page_id: UUID | None = None,
+        root_only: bool = False,
     ) -> tuple[list[Page], int]:
         """워크스페이스의 페이지 목록 조회
 
-        parent_page_id가 None이면 최상위 페이지만 반환.
+        - parent_page_id 지정 시: 해당 부모의 자식 페이지만 반환
+        - root_only=True: 최상위(parent_page_id=NULL) 페이지만 반환
+        - 둘 다 지정 안 하면: 워크스페이스의 전체 페이지 반환 (사이드바 트리용)
         """
         query = select(Page).where(
             Page.workspace_id == workspace_id,
@@ -55,15 +60,15 @@ class PageService:
         )
         if parent_page_id is not None:
             query = query.where(Page.parent_page_id == parent_page_id)
-        else:
-            query = query.where(Page.parent_page_id == None)
+        elif root_only:
+            query = query.where(Page.parent_page_id.is_(None))
 
         query = query.order_by(Page.created_at.desc())
 
         result = await self.db.execute(query)
         pages = list(result.scalars().all())
 
-        # 전체 개수
+        # 전체 개수 (필터와 무관하게 워크스페이스 기준)
         count_query = select(func.count()).select_from(Page).where(
             Page.workspace_id == workspace_id,
             Page.is_deleted == False,

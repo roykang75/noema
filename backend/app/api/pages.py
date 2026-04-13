@@ -53,11 +53,19 @@ async def get_page(
 async def list_pages(
     workspace_id: UUID = Query(...),
     parent_page_id: UUID | None = Query(None),
+    root_only: bool = Query(False),
     user: User = Depends(get_current_user),
     service: PageService = Depends(get_page_service),
 ):
-    """워크스페이스의 페이지 목록 조회"""
-    pages, total = await service.list_by_workspace(workspace_id, parent_page_id)
+    """워크스페이스의 페이지 목록 조회
+
+    - parent_page_id 지정: 해당 부모의 자식만
+    - root_only=true: 최상위 페이지만
+    - 둘 다 없으면: 워크스페이스의 모든 페이지 (사이드바 트리용)
+    """
+    pages, total = await service.list_by_workspace(
+        workspace_id, parent_page_id, root_only,
+    )
     return PageListResponse(pages=pages, total=total)
 
 
