@@ -1,110 +1,43 @@
 /**
- * 아이콘 피커에 표시할 Phosphor 아이콘 큐레이션 목록
- * @phosphor-icons/react 사용. regular weight 기본.
+ * Phosphor 전체 아이콘 목록
+ * - 메타데이터: @phosphor-icons/core (name, pascal_name, categories, tags)
+ * - 컴포넌트: @phosphor-icons/react 에서 pascal_name으로 동적 조회
  */
 
-import {
-  File,
-  FileText,
-  FileCode,
-  Folder,
-  FolderOpen,
-  Book,
-  BookOpen,
-  Notebook,
-  Bookmark,
-  Star,
-  Heart,
-  Flag,
-  PushPin,
-  Tag,
-  House,
-  Buildings,
-  Briefcase,
-  Calendar,
-  Clock,
-  Target,
-  Lightbulb,
-  Lightning,
-  Sparkle,
-  Rocket,
-  Flame,
-  Sun,
-  Moon,
-  Cloud,
-  Package,
-  Cube,
-  Archive,
-  Tray,
-  Envelope,
-  ChatCircle,
-  UsersThree,
-  User,
-  Gear,
-  MagnifyingGlass,
-  Database,
-  Globe,
-  Layout,
-  StackSimple,
-  List,
-  CheckSquare,
-  PencilSimple,
-  type Icon as PhosphorIconType,
-} from "@phosphor-icons/react";
+import { icons as phosphorMeta } from "@phosphor-icons/core";
+import * as PhosphorReact from "@phosphor-icons/react";
+import type { Icon as PhosphorIconType } from "@phosphor-icons/react";
 
 export interface PhosphorIconEntry {
+  /** pascal_name — "FileText" 같은 형식, 저장 ID로도 사용 */
   name: string;
+  /** 검색용 kebab-case 이름 */
+  kebab: string;
+  /** 검색용 태그들 */
+  tags: readonly string[];
   Icon: PhosphorIconType;
 }
 
-export const PHOSPHOR_ICONS: PhosphorIconEntry[] = [
-  { name: "File", Icon: File },
-  { name: "FileText", Icon: FileText },
-  { name: "FileCode", Icon: FileCode },
-  { name: "Folder", Icon: Folder },
-  { name: "FolderOpen", Icon: FolderOpen },
-  { name: "Book", Icon: Book },
-  { name: "BookOpen", Icon: BookOpen },
-  { name: "Notebook", Icon: Notebook },
-  { name: "Bookmark", Icon: Bookmark },
-  { name: "PencilSimple", Icon: PencilSimple },
-  { name: "CheckSquare", Icon: CheckSquare },
-  { name: "List", Icon: List },
-  { name: "Layout", Icon: Layout },
-  { name: "StackSimple", Icon: StackSimple },
-  { name: "Star", Icon: Star },
-  { name: "Heart", Icon: Heart },
-  { name: "Flag", Icon: Flag },
-  { name: "PushPin", Icon: PushPin },
-  { name: "Tag", Icon: Tag },
-  { name: "Target", Icon: Target },
-  { name: "Lightbulb", Icon: Lightbulb },
-  { name: "Lightning", Icon: Lightning },
-  { name: "Sparkle", Icon: Sparkle },
-  { name: "Rocket", Icon: Rocket },
-  { name: "Flame", Icon: Flame },
-  { name: "Sun", Icon: Sun },
-  { name: "Moon", Icon: Moon },
-  { name: "Cloud", Icon: Cloud },
-  { name: "House", Icon: House },
-  { name: "Buildings", Icon: Buildings },
-  { name: "Briefcase", Icon: Briefcase },
-  { name: "Calendar", Icon: Calendar },
-  { name: "Clock", Icon: Clock },
-  { name: "Package", Icon: Package },
-  { name: "Cube", Icon: Cube },
-  { name: "Archive", Icon: Archive },
-  { name: "Tray", Icon: Tray },
-  { name: "Envelope", Icon: Envelope },
-  { name: "ChatCircle", Icon: ChatCircle },
-  { name: "UsersThree", Icon: UsersThree },
-  { name: "User", Icon: User },
-  { name: "Gear", Icon: Gear },
-  { name: "MagnifyingGlass", Icon: MagnifyingGlass },
-  { name: "Database", Icon: Database },
-  { name: "Globe", Icon: Globe },
-];
+const PhosphorReactAny = PhosphorReact as unknown as Record<
+  string,
+  PhosphorIconType | unknown
+>;
+
+const _raw: Array<PhosphorIconEntry | null> = phosphorMeta.map((meta) => {
+  const Icon = PhosphorReactAny[meta.pascal_name];
+  if (!Icon || typeof Icon !== "object") return null;
+  return {
+    name: meta.pascal_name,
+    kebab: meta.name,
+    tags: meta.tags,
+    Icon: Icon as PhosphorIconType,
+  };
+});
+
+export const PHOSPHOR_ALL: PhosphorIconEntry[] = _raw.filter(
+  (e): e is PhosphorIconEntry => e !== null,
+);
 
 export const PHOSPHOR_ICONS_MAP = new Map(
-  PHOSPHOR_ICONS.map((e) => [e.name, e.Icon]),
+  PHOSPHOR_ALL.map((e) => [e.name, e.Icon]),
 );
