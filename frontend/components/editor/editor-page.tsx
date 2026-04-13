@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import BlockEditor, { type NoemaEditor } from "./block-editor";
-import SummarizeButton from "@/components/ai/summarize-button";
 import AIChatPanel from "@/components/ai/ai-chat-panel";
+import { useAIChatStore } from "@/lib/stores/ai-chat-store";
 
 interface EditorPageProps {
   pageId: string;
@@ -102,7 +102,8 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
   const [initialBlocks, setInitialBlocks] = useState<SchemaBlock[] | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showChat, setShowChat] = useState(false);
+  const showChat = useAIChatStore((s) => s.isOpen);
+  const closeChat = useAIChatStore((s) => s.close);
   const editorRef = useRef<NoemaEditor | null>(null);
   const [editorReady, setEditorReady] = useState(false);
 
@@ -347,23 +348,10 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
           className="mb-4 w-full border-none bg-transparent text-3xl font-bold text-gray-900 placeholder-gray-300 outline-none"
         />
 
-        <div className="mb-3 flex items-center gap-3">
-          <SummarizeButton pageId={pageId} />
-          <button
-            onClick={() => setShowChat((v) => !v)}
-            className={`rounded-md px-3 py-1.5 text-sm ${
-              showChat
-                ? "bg-gray-900 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            💬 AI 질문
-          </button>
-
-          <div className="ml-auto flex items-center gap-2 text-xs text-gray-400">
-            {saving && <span>저장 중...</span>}
-            {error && <span className="text-red-500">{error}</span>}
-          </div>
+        {/* 저장 상태 표시 */}
+        <div className="mb-3 flex h-5 items-center justify-end gap-2 text-xs text-gray-400">
+          {saving && <span>저장 중...</span>}
+          {error && <span className="text-red-500">{error}</span>}
         </div>
 
         <BlockEditor
@@ -379,7 +367,7 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
       </div>
 
       {showChat && (
-        <AIChatPanel pageId={pageId} onClose={() => setShowChat(false)} />
+        <AIChatPanel pageId={pageId} onClose={closeChat} />
       )}
     </div>
   );
