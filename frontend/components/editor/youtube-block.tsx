@@ -415,15 +415,22 @@ function YouTubeCard({
     }
   })();
 
+  // <a> 링크 클릭만 BlockNote로의 전파를 차단 (중복 탭 열림 방지)
+  // 그 외 클릭은 정상 전파되어 BlockNote가 블록 선택을 감지할 수 있음
+  const stopLinkClickPropagation = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement | null;
+    if (target?.closest("a")) {
+      e.stopPropagation();
+    }
+  };
+
   return (
     <div
       ref={containerRef}
       contentEditable={false}
       suppressContentEditableWarning
-      // 블록 내부 클릭이 BlockNote/ProseMirror로 전파되어 중복 처리되는 것을 방지
-      // (small/medium/card 모드에서 링크 클릭 시 2개 탭이 열리던 버그)
-      onClickCapture={(e) => e.stopPropagation()}
-      onMouseDownCapture={(e) => e.stopPropagation()}
+      onClickCapture={stopLinkClickPropagation}
+      onMouseDownCapture={stopLinkClickPropagation}
     >
       {body}
     </div>
