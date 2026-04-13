@@ -457,6 +457,9 @@ function YouTubeCard({
       suppressContentEditableWarning
       onClickCapture={stopLinkClickPropagation}
       onMouseDownCapture={stopLinkClickPropagation}
+      // 부모(bn-block-content)가 display:flex이므로 flex item이 자식 콘텐츠 크기로
+      // 축소되는 것을 방지 — 전체 flex 공간을 채우도록 flex-grow 지정
+      style={{ flex: "1 1 auto", width: "100%", minWidth: 0 }}
     >
       {body}
     </div>
