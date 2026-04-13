@@ -60,7 +60,7 @@ function YouTubeToolbarContent({
 
   return (
     <>
-      {/* 1. 새 창에서 재생 */}
+      {/* 1. 새 창에서 재생 — 박스 + 외부로 나가는 화살표 */}
       <a
         href={watchUrl}
         target="_blank"
@@ -69,52 +69,93 @@ function YouTubeToolbarContent({
         title="새 창에서 재생"
         aria-label="새 창에서 재생"
       >
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M15 3h6v6" />
-          <path d="M10 14L21 3" />
-          <path d="M21 14v7H3V3h7" />
+        <svg
+          viewBox="0 0 24 24"
+          className="h-[18px] w-[18px]"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M14 4h6v6" />
+          <path d="M10 14 20 4" />
+          <path d="M19 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5" />
         </svg>
       </a>
 
       {/* 구분 */}
       <div className="mx-0.5 h-5 w-px bg-gray-200" />
 
-      {/* 2. 작은 상태 */}
+      {/* 2. 작은 상태 — 위아래로 쌓인 2개 막대 */}
       {modeBtn(
         "small",
         "작은 상태",
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-          <rect x="3" y="9" width="18" height="6" rx="1" />
-          <line x1="3" y1="12" x2="21" y2="12" />
+        <svg
+          viewBox="0 0 24 24"
+          className="h-[18px] w-[18px]"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+        >
+          <rect x="4" y="6" width="16" height="5" rx="1.2" />
+          <rect x="4" y="13" width="16" height="5" rx="1.2" />
         </svg>,
       )}
 
-      {/* 3. 보통 상태 */}
+      {/* 3. 보통 상태 — 단순 둥근 사각형 */}
       {modeBtn(
         "medium",
         "보통 상태",
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-          <rect x="3" y="6" width="18" height="12" rx="2" />
-          <line x1="3" y1="12" x2="10" y2="12" />
+        <svg
+          viewBox="0 0 24 24"
+          className="h-[18px] w-[18px]"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+        >
+          <rect x="4" y="6" width="16" height="12" rx="2" />
         </svg>,
       )}
 
-      {/* 4. 카드 형태 */}
+      {/* 4. 카드 형태 — 겹쳐진 2개 둥근 사각형 */}
       {modeBtn(
         "card",
         "카드 형태",
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-          <rect x="5" y="3" width="14" height="18" rx="2" />
-          <line x1="5" y1="10" x2="19" y2="10" />
+        <svg
+          viewBox="0 0 24 24"
+          className="h-[18px] w-[18px]"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+        >
+          <rect x="8" y="3" width="13" height="13" rx="2" />
+          <path d="M16 16v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h2" />
         </svg>,
       )}
 
-      {/* 5. 임베드 */}
+      {/* 5. 임베드 — 둥근 사각형 안의 재생 아이콘 */}
       {modeBtn(
         "embed",
         "임베드",
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
-          <path d="M8 5v14l11-7z" />
+        <svg
+          viewBox="0 0 24 24"
+          className="h-[18px] w-[18px]"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+        >
+          <rect x="3" y="5" width="18" height="14" rx="2" />
+          <path
+            d="M11 9.5v5l4-2.5-4-2.5z"
+            fill="currentColor"
+            stroke="currentColor"
+            strokeWidth="1"
+          />
         </svg>,
       )}
     </>
