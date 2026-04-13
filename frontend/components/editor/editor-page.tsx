@@ -7,6 +7,7 @@ import BottomToolbar from "./bottom-toolbar";
 import PageHeader from "./page-header";
 import AIChatPanel from "@/components/ai/ai-chat-panel";
 import { useAIChatStore } from "@/lib/stores/ai-chat-store";
+import { usePageStore } from "@/lib/stores/page-store";
 
 interface EditorPageProps {
   pageId: string;
@@ -314,6 +315,8 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
   const handleTitleSave = useCallback(
     async (newTitle: string) => {
       if (!session) return;
+      // 사이드바 등 다른 컴포넌트가 즉시 반영되도록 스토어 먼저 업데이트 (optimistic)
+      usePageStore.getState().updatePage(pageId, { title: newTitle });
       try {
         await fetch(`${apiUrl}/pages/${pageId}`, {
           method: "PATCH",

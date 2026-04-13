@@ -14,6 +14,8 @@ interface PageStore {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   addPage: (page: Page) => void;
+  /** 특정 페이지의 일부 필드 업데이트 (예: 제목, 아이콘) */
+  updatePage: (pageId: string, patch: Partial<Page>) => void;
   removePage: (pageId: string) => void;
 }
 
@@ -25,6 +27,12 @@ export const usePageStore = create<PageStore>((set) => ({
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
   addPage: (page) => set((state) => ({ pages: [...state.pages, page] })),
+  updatePage: (pageId, patch) =>
+    set((state) => ({
+      pages: state.pages.map((p) =>
+        p.id === pageId ? { ...p, ...patch } : p,
+      ),
+    })),
   removePage: (pageId) =>
     set((state) => ({ pages: state.pages.filter((p) => p.id !== pageId) })),
 }));
