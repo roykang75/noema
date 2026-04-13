@@ -14,6 +14,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+// containerRef는 메타데이터/레이아웃 구조 상 유지 (향후 선택 상태 추적 재도입 시 활용)
 import { useSession } from "next-auth/react";
 import { createReactBlockSpec } from "@blocknote/react";
 import { useAIChatStore } from "@/lib/stores/ai-chat-store";
@@ -158,28 +159,11 @@ function YouTubeToolbar({ watchUrl }: { watchUrl: string }) {
 function YouTubeCard({ videoId }: { videoId: string }) {
   const { data: session } = useSession();
   const [playing, setPlaying] = useState(false);
-  const [selected, setSelected] = useState(false);
   const [meta, setMeta] = useState<YouTubeMetadata | null>(null);
   const [metaError, setMetaError] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const isValidId = VIDEO_ID_RE.test(videoId);
-
-  // 전역 mousedown 리스너 — 카드 내부면 선택, 외부면 해제
-  // React onClick은 BlockNote NodeView 내부에서 제대로 전파되지 않아 native 리스너 사용
-  useEffect(() => {
-    const handleMouseDown = (e: MouseEvent) => {
-      const el = containerRef.current;
-      if (!el) return;
-      if (el.contains(e.target as Node)) {
-        setSelected(true);
-      } else {
-        setSelected(false);
-      }
-    };
-    document.addEventListener("mousedown", handleMouseDown);
-    return () => document.removeEventListener("mousedown", handleMouseDown);
-  }, []);
 
   // 메타데이터 조회
   useEffect(() => {
@@ -231,14 +215,11 @@ function YouTubeCard({ videoId }: { videoId: string }) {
       ref={containerRef}
       contentEditable={false}
       suppressContentEditableWarning
-      className="my-2 w-full max-w-2xl"
+      className="group/yt my-2 w-full max-w-2xl"
     >
       {/* 메인 카드 */}
-      <div
-        className={`overflow-hidden rounded-xl border bg-white shadow-sm transition-colors ${
-          selected ? "border-blue-400 ring-1 ring-blue-200" : "border-gray-200"
-        }`}
-      >
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-colors group-hover/yt:border-blue-300">
+
         {/* 플레이어/썸네일 */}
         <div className="relative aspect-video w-full bg-black">
           {playing ? (
@@ -254,7 +235,6 @@ function YouTubeCard({ videoId }: { videoId: string }) {
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                setSelected(true);
                 setPlaying(true);
               }}
               className="group relative block h-full w-full cursor-pointer overflow-hidden"
@@ -329,8 +309,10 @@ function YouTubeCard({ videoId }: { videoId: string }) {
         </div>
       </div>
 
-      {/* 하단 툴바 — 선택되었을 때만 */}
-      {selected && <YouTubeToolbar watchUrl={watchUrl} />}
+      {/* 하단 툴바 — 카드 hover 시 표시 */}
+      <div className="pointer-events-none opacity-0 transition-opacity duration-150 group-hover/yt:pointer-events-auto group-hover/yt:opacity-100">
+        <YouTubeToolbar watchUrl={watchUrl} />
+      </div>
     </div>
   );
 }
