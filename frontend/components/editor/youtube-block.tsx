@@ -165,18 +165,21 @@ function YouTubeCard({ videoId }: { videoId: string }) {
 
   const isValidId = VIDEO_ID_RE.test(videoId);
 
-  // 외부 클릭 시 선택 해제
+  // 전역 mousedown 리스너 — 카드 내부면 선택, 외부면 해제
+  // React onClick은 BlockNote NodeView 내부에서 제대로 전파되지 않아 native 리스너 사용
   useEffect(() => {
-    if (!selected) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (!containerRef.current) return;
-      if (!containerRef.current.contains(e.target as Node)) {
+    const handleMouseDown = (e: MouseEvent) => {
+      const el = containerRef.current;
+      if (!el) return;
+      if (el.contains(e.target as Node)) {
+        setSelected(true);
+      } else {
         setSelected(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [selected]);
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, []);
 
   // 메타데이터 조회
   useEffect(() => {
@@ -228,7 +231,6 @@ function YouTubeCard({ videoId }: { videoId: string }) {
       ref={containerRef}
       contentEditable={false}
       suppressContentEditableWarning
-      onClick={() => setSelected(true)}
       className="my-2 w-full max-w-2xl"
     >
       {/* 메인 카드 */}
