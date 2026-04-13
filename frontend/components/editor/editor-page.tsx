@@ -22,6 +22,9 @@ function extractYouTubeId(text: string): string | null {
   return match ? match[1] : null;
 }
 
+// 저장/로드 시 videoId 유효성 검증
+const VIDEO_ID_RE = /^[A-Za-z0-9_-]{11}$/;
+
 /**
  * 백엔드 블록 응답 타입
  */
@@ -60,11 +63,16 @@ function backendBlocksToPartial(blocks: BackendBlock[]): SchemaBlock[] {
   return blocks.map((block) => {
     const rawType = block.type ?? "paragraph";
 
-    // YouTube 커스텀 블록
+    // YouTube 커스텀 블록 — videoId 유효성 검증
     if (rawType === "youtube") {
+      const videoId = block.content?.videoId ?? "";
+      if (!VIDEO_ID_RE.test(videoId)) {
+        // 손상된 videoId는 paragraph로 폴백하여 데이터 유실 방지
+        return { type: "paragraph", content: "" } as SchemaBlock;
+      }
       return {
         type: "youtube",
-        props: { videoId: block.content?.videoId ?? "" },
+        props: { videoId },
       } as SchemaBlock;
     }
 
@@ -96,6 +104,7 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [showChat, setShowChat] = useState(false);
   const editorRef = useRef<NoemaEditor | null>(null);
+  const [editorReady, setEditorReady] = useState(false);
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -201,7 +210,8 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
     return () => {
       document.removeEventListener("paste", handlePaste, { capture: true });
     };
-  }, []);
+    // editorReady가 true가 된 후에만 리스너 등록 — null race 방지
+  }, [editorReady]);
 
   // 블록 저장 — 기본 블록은 text, YouTube 블록은 videoId 저장
   const handleSave = useCallback(
@@ -219,12 +229,22 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
           content?: unknown;
           props?: Record<string, unknown>;
         }>).map((block, index) => {
-          // YouTube 블록 — videoId만 저장
+          // YouTube 블록 — videoId 검증 후 저장
           if (block.type === "youtube") {
+            const vid = String(block.props?.videoId ?? "");
+            // 손상된 videoId는 빈 paragraph로 저장 (원본 데이터 유실 방지는 프론트 렌더에서)
+            if (!VIDEO_ID_RE.test(vid)) {
+              return {
+                page_id: pageId,
+                type: "paragraph",
+                content: { text: [{ text: "" }] },
+                order: index,
+              };
+            }
             return {
               page_id: pageId,
               type: "youtube",
-              content: { videoId: (block.props?.videoId as string) ?? "" },
+              content: { videoId: vid },
               order: index,
             };
           }
@@ -353,6 +373,7 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
           onSave={handleSave}
           onEditorReady={(editor) => {
             editorRef.current = editor;
+            setEditorReady(true);
           }}
         />
       </div>

@@ -13,6 +13,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { createReactBlockSpec } from "@blocknote/react";
 
 interface YouTubeMetadata {
@@ -20,51 +21,82 @@ interface YouTubeMetadata {
   author_name: string;
   author_url: string;
   thumbnail_url: string;
-  provider_name: string;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+// 정확히 11자 [A-Za-z0-9_-] — YouTube video ID 형식
+const VIDEO_ID_RE = /^[A-Za-z0-9_-]{11}$/;
+
+/**
+ * author_url이 YouTube 공식 호스트인지 확인 (XSS 방어)
+ */
+function isSafeYouTubeUrl(url: string | undefined | null): url is string {
+  if (!url) return false;
+  try {
+    const u = new URL(url);
+    if (u.protocol !== "https:") return false;
+    return u.hostname === "www.youtube.com" || u.hostname === "youtube.com";
+  } catch {
+    return false;
+  }
+}
 
 /**
  * YouTube 임베드 카드 — 썸네일 + 재생 오버레이 + 메타 카드
  */
 function YouTubeCard({ videoId }: { videoId: string }) {
+  const { data: session } = useSession();
   const [playing, setPlaying] = useState(false);
   const [meta, setMeta] = useState<YouTubeMetadata | null>(null);
   const [metaError, setMetaError] = useState(false);
 
-  // 메타데이터 조회
+  const isValidId = VIDEO_ID_RE.test(videoId);
+
+  // 메타데이터 조회 — AbortController로 중복 요청 취소
   useEffect(() => {
-    if (!videoId) return;
-    let cancelled = false;
+    if (!isValidId) return;
+    const controller = new AbortController();
+    const token = (session as { accessToken?: string } | null)?.accessToken;
 
     async function loadMeta() {
       try {
         const res = await fetch(
-          `${API_URL}/youtube/metadata?video_id=${videoId}`,
+          `${API_URL}/youtube/metadata?video_id=${encodeURIComponent(videoId)}`,
+          {
+            signal: controller.signal,
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          },
         );
-        if (!res.ok) throw new Error("metadata failed");
+        if (!res.ok) throw new Error(`metadata ${res.status}`);
         const data = (await res.json()) as YouTubeMetadata;
-        if (!cancelled) setMeta(data);
-      } catch {
-        if (!cancelled) setMetaError(true);
+        if (!controller.signal.aborted) setMeta(data);
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        if (err instanceof Error && err.name === "AbortError") return;
+        setMetaError(true);
       }
     }
 
     loadMeta();
-    return () => {
-      cancelled = true;
-    };
-  }, [videoId]);
+    return () => controller.abort();
+  }, [videoId, isValidId, session]);
 
-  if (!videoId) {
-    return <div className="text-sm text-red-500">YouTube ID 없음</div>;
+  if (!isValidId) {
+    return (
+      <div className="my-2 rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-600">
+        잘못된 YouTube ID ({videoId || "빈 값"})
+      </div>
+    );
   }
 
   const thumbnailUrl =
     meta?.thumbnail_url ||
     `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
   const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+  const safeAuthorUrl = isSafeYouTubeUrl(meta?.author_url)
+    ? meta!.author_url
+    : watchUrl;
 
   return (
     <div
@@ -94,6 +126,12 @@ function YouTubeCard({ videoId }: { videoId: string }) {
             <img
               src={thumbnailUrl}
               alt={meta?.title || "YouTube 썸네일"}
+              onError={(e) => {
+                // hqdefault.jpg가 404인 경우 0.jpg로 폴백
+                const img = e.currentTarget;
+                const fallback = `https://img.youtube.com/vi/${videoId}/0.jpg`;
+                if (img.src !== fallback) img.src = fallback;
+              }}
               className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
             />
             {/* 재생 버튼 오버레이 */}
@@ -137,7 +175,7 @@ function YouTubeCard({ videoId }: { videoId: string }) {
                 {meta.title}
               </a>
               <a
-                href={meta.author_url || watchUrl}
+                href={safeAuthorUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-0.5 block truncate text-xs text-gray-500 hover:text-gray-700"
