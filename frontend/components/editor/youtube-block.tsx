@@ -258,7 +258,7 @@ function EmbedLayout({
   playing, setPlaying,
 }: LayoutProps & { playing: boolean; setPlaying: (v: boolean) => void }) {
   return (
-    <div className="my-2 w-full max-w-2xl overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div className="my-2 w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
       <div className="relative aspect-video w-full bg-black">
         {playing ? (
           <iframe
