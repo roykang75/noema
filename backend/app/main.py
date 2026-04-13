@@ -13,6 +13,7 @@ from app.api.pages import router as pages_router
 from app.api.tags import router as tags_router
 from app.api.uploads import router as uploads_router
 from app.api.workspace import router as workspace_router
+from app.api.youtube import router as youtube_router
 from app.db.postgres import async_engine
 
 
@@ -48,6 +49,7 @@ app.include_router(pages_router)
 app.include_router(tags_router)
 app.include_router(uploads_router)
 app.include_router(workspace_router)
+app.include_router(youtube_router)
 
 
 @app.get("/health")

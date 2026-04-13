@@ -32,6 +32,7 @@ interface BackendBlock {
     | {
         text?: Array<{ text?: string }>;
         props?: Record<string, unknown>;
+        videoId?: string;
       }
     | null;
 }
@@ -58,6 +59,14 @@ function backendBlocksToPartial(blocks: BackendBlock[]): SchemaBlock[] {
 
   return blocks.map((block) => {
     const rawType = block.type ?? "paragraph";
+
+    // YouTube 커스텀 블록
+    if (rawType === "youtube") {
+      return {
+        type: "youtube",
+        props: { videoId: block.content?.videoId ?? "" },
+      } as SchemaBlock;
+    }
 
     // 이미지/비디오/오디오/파일 블록 — props 복원
     if (mediaTypes.has(rawType)) {
@@ -154,12 +163,10 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
       e.stopPropagation();
       e.stopImmediatePropagation();
 
-      // BlockNote 기본 image 블록으로 YouTube 썸네일 삽입
-      const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-      const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
-      const imageBlock = {
-        type: "image",
-        props: { url: thumbnailUrl, caption: watchUrl },
+      // 커스텀 YouTube 블록 삽입 (썸네일 + 재생 버튼 + 메타데이터 카드)
+      const youtubeBlock = {
+        type: "youtube",
+        props: { videoId },
       };
 
       const cursor = editor.getTextCursorPosition();
@@ -178,12 +185,12 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
         editor.replaceBlocks(
           [currentBlock.id],
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          [imageBlock] as any,
+          [youtubeBlock] as any,
         );
       } else {
         editor.insertBlocks(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          [imageBlock] as any,
+          [youtubeBlock] as any,
           currentBlock,
           "after",
         );
@@ -212,6 +219,16 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
           content?: unknown;
           props?: Record<string, unknown>;
         }>).map((block, index) => {
+          // YouTube 블록 — videoId만 저장
+          if (block.type === "youtube") {
+            return {
+              page_id: pageId,
+              type: "youtube",
+              content: { videoId: (block.props?.videoId as string) ?? "" },
+              order: index,
+            };
+          }
+
           // 미디어 블록 — props만 저장 (url, caption 등)
           if (mediaTypes.has(block.type)) {
             return {

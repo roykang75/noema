@@ -1,13 +1,26 @@
 "use client";
 
 import { useEffect } from "react";
-import type { BlockNoteEditor } from "@blocknote/core";
+import { BlockNoteSchema, defaultBlockSpecs } from "@blocknote/core";
 import { useCreateBlockNote } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
+import { youtubeBlockSpec } from "./youtube-block";
 
-export type NoemaEditor = BlockNoteEditor;
+/**
+ * 커스텀 스키마 — 기본 블록 + YouTube 블록
+ * createReactBlockSpec 반환값은 factory이므로 호출(`()`)해서 BlockSpec을 얻어야 함
+ */
+export const noemaSchema = BlockNoteSchema.create({
+  blockSpecs: {
+    ...defaultBlockSpecs,
+    youtube: youtubeBlockSpec(),
+  },
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type NoemaEditor = any;
 
 interface BlockEditorProps {
   pageId: string;
@@ -19,8 +32,8 @@ interface BlockEditorProps {
 }
 
 /**
- * BlockNote 에디터 래퍼 (기본 스키마)
- * - 부모에게 editor 인스턴스 노출 (onEditorReady) — YouTube 붙여넣기 등에서 활용
+ * BlockNote 에디터 래퍼 — 커스텀 스키마 (YouTube 포함)
+ * - 부모에게 editor 인스턴스 노출 (onEditorReady)
  * - 파일 업로드는 /uploads 엔드포인트로
  * - 1초 디바운스 자동 저장
  */
@@ -34,6 +47,7 @@ export default function BlockEditor({
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   const editor = useCreateBlockNote({
+    schema: noemaSchema,
     initialContent:
       initialBlocks && initialBlocks.length > 0 ? initialBlocks : undefined,
     uploadFile: async (file: File) => {
@@ -49,12 +63,10 @@ export default function BlockEditor({
     },
   });
 
-  // 부모에게 editor 인스턴스 노출
   useEffect(() => {
-    onEditorReady?.(editor as unknown as NoemaEditor);
+    onEditorReady?.(editor);
   }, [editor, onEditorReady]);
 
-  // 디바운스 자동 저장
   useEffect(() => {
     if (readOnly || !onSave) return;
     let timeoutId: NodeJS.Timeout;
