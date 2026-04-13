@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import BlockEditor, { type NoemaEditor } from "./block-editor";
 import BottomToolbar from "./bottom-toolbar";
+import PageHeader from "./page-header";
 import AIChatPanel from "@/components/ai/ai-chat-panel";
 import { useAIChatStore } from "@/lib/stores/ai-chat-store";
 
@@ -338,8 +339,12 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
   }
 
   return (
-    <div className="flex h-full">
-      <div className="mx-auto flex-1 max-w-4xl p-6">
+    <div className="flex h-full flex-col">
+      {/* 페이지 상단 헤더 — 브레드크럼 + 우측 액션 */}
+      <PageHeader pageId={pageId} pageTitle={title} />
+
+      <div className="flex min-h-0 flex-1">
+        <div className="mx-auto flex-1 max-w-4xl overflow-auto p-6">
         <input
           type="text"
           value={title}
@@ -372,11 +377,12 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
             setEditorReady(true);
           }}
         />
-      </div>
+        </div>
 
-      {showChat && (
-        <AIChatPanel pageId={pageId} onClose={closeChat} />
-      )}
+        {showChat && (
+          <AIChatPanel pageId={pageId} onClose={closeChat} />
+        )}
+      </div>
 
       {/* 하단 고정 툴바 + 어시스턴트 버튼 */}
       <BottomToolbar />
