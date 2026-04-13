@@ -257,8 +257,15 @@ function EmbedLayout({
   videoId, meta, thumbnailUrl, watchUrl, safeAuthorUrl,
   playing, setPlaying,
 }: LayoutProps & { playing: boolean; setPlaying: (v: boolean) => void }) {
+  // BlockNote의 padding-inline(54px)를 뚫고 더 넓은 폭으로 렌더
   return (
-    <div className="my-2 w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div
+      className="my-2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
+      style={{
+        width: "calc(100% + 108px)",
+        marginLeft: "-54px",
+      }}
+    >
       <div className="relative aspect-video w-full bg-black">
         {playing ? (
           <iframe
