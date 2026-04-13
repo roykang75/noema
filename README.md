@@ -130,33 +130,34 @@ cd noema
 
 ### 2. 환경변수 설정
 
-**백엔드**
+프로젝트 루트의 `.env` 파일 하나로 백엔드와 프론트엔드의 모든 환경변수를 관리합니다. `backend/.env`와 `frontend/.env.local`은 루트 `.env`를 가리키는 심볼릭 링크로 연결되어 있습니다.
 
 ```bash
-cp backend/.env.example backend/.env
+cp .env.example .env
 ```
 
-`backend/.env`를 열어 아래 값을 채웁니다.
+`.env`를 열어 아래 값을 채웁니다.
 
 ```env
+# 백엔드
 ANTHROPIC_API_KEY=sk-ant-...
 VOYAGE_API_KEY=pa-...
 NEO4J_PASSWORD=your_password
-JWT_SECRET=your_jwt_secret
-```
+JWT_SECRET=your_jwt_secret          # 프론트엔드와 동일한 값 사용
 
-**프론트엔드**
-
-```bash
-cp frontend/.env.local.example frontend/.env.local
-```
-
-`frontend/.env.local`을 열어 아래 값을 채웁니다.
-
-```env
+# 프론트엔드 (NextAuth + Google OAuth)
 NEXTAUTH_SECRET=your_nextauth_secret
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
+```
+
+> **참고**: `JWT_SECRET`은 프론트엔드에서 JWT를 서명하고 백엔드에서 검증하므로 두 서비스에서 반드시 동일한 값이어야 합니다. 단일 `.env`를 사용하므로 자동으로 일치합니다.
+
+심볼릭 링크가 없을 경우 직접 생성할 수 있습니다:
+
+```bash
+ln -s ../.env backend/.env
+ln -s ../.env frontend/.env.local
 ```
 
 ### 3. 인프라 시작 (PostgreSQL, Neo4j, Redis)
