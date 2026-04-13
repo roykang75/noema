@@ -17,6 +17,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { createReactBlockSpec } from "@blocknote/react";
+import { useBlockSelectionStore } from "@/lib/stores/block-selection-store";
 
 export type YouTubeDisplayMode = "small" | "medium" | "card" | "embed";
 
@@ -342,6 +343,24 @@ function YouTubeCard({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const isValidId = VIDEO_ID_RE.test(videoId);
+
+  // 카드 내부 클릭 시 selection store에 현재 블록 상태를 알림
+  // BlockNote의 onSelectionChange가 atom 블록(content:"none")을 정확히 잡지 못하는 경우 대비
+  // setTimeout(0)으로 BlockNote의 내부 핸들러 뒤에 실행하여 레이스 방지
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const handleMouseDown = () => {
+      setTimeout(() => {
+        useBlockSelectionStore.getState().setSelection("youtube", {
+          videoId,
+          displayMode,
+        });
+      }, 0);
+    };
+    el.addEventListener("mousedown", handleMouseDown);
+    return () => el.removeEventListener("mousedown", handleMouseDown);
+  }, [videoId, displayMode]);
 
   useEffect(() => {
     if (!isValidId) return;

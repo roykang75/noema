@@ -41,6 +41,11 @@ function YouTubeToolbarContent({
         type: "youtube",
         props: { videoId, displayMode: mode },
       });
+      // store도 즉시 반영 — editor.onSelectionChange는 selection 변경만 감지
+      useBlockSelectionStore.getState().setSelection("youtube", {
+        videoId,
+        displayMode: mode,
+      });
     } catch (err) {
       console.error("displayMode 변경 실패:", err);
     }
