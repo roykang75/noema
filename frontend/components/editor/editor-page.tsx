@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Block, PartialBlock } from "@blocknote/core";
 import BlockEditor from "./block-editor";
@@ -73,8 +73,34 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [showChat, setShowChat] = useState(false);
   const [youtubeEmbeds, setYoutubeEmbeds] = useState<string[]>([]);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+  // YouTube URL 자동 감지 — ProseMirror가 처리하기 전에 가로채기 위해 capture phase 사용
+  useEffect(() => {
+    const container = editorContainerRef.current;
+    if (!container) return;
+
+    const handlePaste = (e: ClipboardEvent) => {
+      const pasted = e.clipboardData?.getData("text/plain") ?? "";
+      const videoId = extractYouTubeId(pasted);
+      if (videoId) {
+        e.preventDefault();
+        e.stopPropagation();
+        setYoutubeEmbeds((prev) => [
+          ...prev,
+          `https://www.youtube.com/embed/${videoId}`,
+        ]);
+      }
+    };
+
+    // capture: true → 캡처 단계에서 먼저 실행되어 ProseMirror보다 우선
+    container.addEventListener("paste", handlePaste, { capture: true });
+    return () => {
+      container.removeEventListener("paste", handlePaste, { capture: true });
+    };
+  }, []);
 
   // 인증 헤더 생성 헬퍼
   const authHeaders = useCallback((): Record<string, string> => {
@@ -247,21 +273,9 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
         </div>
 
         {/* BlockNote 에디터 — pageId가 바뀌면 재마운트하여 새 initialContent 적용
-            onPaste: YouTube URL이 붙여넣기되면 자동으로 임베드 플레이어로 변환 */}
-        <div
-          onPaste={(e) => {
-            const pasted = e.clipboardData.getData("text/plain");
-            const videoId = extractYouTubeId(pasted);
-            if (videoId) {
-              e.preventDefault();
-              e.stopPropagation();
-              setYoutubeEmbeds((prev) => [
-                ...prev,
-                `https://www.youtube.com/embed/${videoId}`,
-              ]);
-            }
-          }}
-        >
+            ref 컨테이너에 capture phase로 paste 이벤트 가로채기 —
+            ProseMirror가 처리하기 전에 YouTube URL 감지 */}
+        <div ref={editorContainerRef}>
           <BlockEditor
             key={pageId}
             pageId={pageId}
