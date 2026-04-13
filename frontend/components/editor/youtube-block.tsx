@@ -118,7 +118,7 @@ function SmallLayout({
       href={watchUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="my-2 flex max-w-2xl items-stretch overflow-hidden rounded-lg border border-gray-200 bg-white transition-colors hover:border-blue-300"
+      className="flex max-w-2xl items-stretch overflow-hidden rounded-lg border border-gray-200 bg-white transition-colors hover:border-blue-300"
     >
       <div className="relative h-16 w-28 flex-shrink-0 bg-black">
         <Thumb
@@ -142,7 +142,7 @@ function MediumLayout({
   videoId, meta, thumbnailUrl, watchUrl, safeAuthorUrl,
 }: LayoutProps) {
   return (
-    <div className="my-2 flex max-w-3xl items-stretch overflow-hidden rounded-lg border border-gray-200 bg-white">
+    <div className="flex max-w-3xl items-stretch overflow-hidden rounded-lg border border-gray-200 bg-white">
       {/* 썸네일 */}
       <a
         href={watchUrl}
@@ -206,7 +206,7 @@ function CardLayout({
   videoId, meta, thumbnailUrl, watchUrl, safeAuthorUrl,
 }: LayoutProps) {
   return (
-    <div className="my-2 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div className="w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
       <a
         href={watchUrl}
         target="_blank"
@@ -444,9 +444,23 @@ function YouTubeCard({
     }
   };
 
-  // embed 모드만 breakout 적용 — 선택 outline(BlockNote CSS가 이 wrapper 기준으로 그림)도
-  // 함께 확장되어 카드 크기와 정확히 일치하도록 함
+  // 선택 outline은 BlockNote CSS가 이 wrapper 기준으로 그림 →
+  // wrapper 크기가 내부 카드와 정확히 일치해야 outline이 맞음
   const isEmbed = displayMode === "embed";
+  const wrapperStyle: React.CSSProperties = isEmbed
+    ? {
+        // embed: flex 영역 전체 + breakout
+        flex: "1 1 auto",
+        minWidth: 0,
+        width: "calc(100% + 20px)",
+        marginLeft: "-10px",
+      }
+    : {
+        // small/medium/card: 카드 자연 크기에 맞춰 축소
+        flex: "0 0 auto",
+        width: "fit-content",
+      };
+
   return (
     <div
       ref={containerRef}
@@ -454,12 +468,7 @@ function YouTubeCard({
       suppressContentEditableWarning
       onClickCapture={stopLinkClickPropagation}
       onMouseDownCapture={stopLinkClickPropagation}
-      style={{
-        flex: "1 1 auto",
-        minWidth: 0,
-        width: isEmbed ? "calc(100% + 20px)" : "100%",
-        marginLeft: isEmbed ? "-10px" : 0,
-      }}
+      style={wrapperStyle}
     >
       {body}
     </div>
