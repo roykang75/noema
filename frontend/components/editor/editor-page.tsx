@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { Block } from "@blocknote/core";
+import { Block, PartialBlock } from "@blocknote/core";
 import BlockEditor from "./block-editor";
 import YouTubeEmbed, { YouTubePlayer } from "./youtube-embed";
 import SummarizeButton from "@/components/ai/summarize-button";
@@ -14,14 +14,50 @@ interface EditorPageProps {
 }
 
 /**
- * 에디터 페이지 — 블록 로드/저장 관리
- * - 세션 토큰을 사용해 백엔드 API 인증
- * - 저장 시 BlockNote 형식 → 백엔드 형식 변환
+ * 백엔드 블록 응답 타입
+ */
+interface BackendBlock {
+  id: string;
+  type?: string;
+  content?: {
+    text?: Array<{ text?: string }>;
+  } | null;
+}
+
+/**
+ * 백엔드 블록 → BlockNote PartialBlock 변환
+ * 저장된 content.text[].text를 합쳐서 하나의 텍스트 문자열로 복원합니다.
+ */
+function backendBlocksToPartial(blocks: BackendBlock[]): PartialBlock[] {
+  return blocks.map((block) => {
+    const text =
+      block.content?.text?.map((t) => t.text ?? "").join("") ?? "";
+    // BlockNote의 내장 블록 타입만 사용. 알 수 없는 타입은 paragraph로 폴백.
+    const rawType = block.type ?? "paragraph";
+    const supportedTypes = new Set([
+      "paragraph",
+      "heading",
+      "bulletListItem",
+      "numberedListItem",
+      "checkListItem",
+      "quote",
+      "codeBlock",
+    ]);
+    const type = supportedTypes.has(rawType) ? rawType : "paragraph";
+    return {
+      type: type as PartialBlock["type"],
+      content: text,
+    } as PartialBlock;
+  });
+}
+
+/**
+ * 에디터 페이지 — 페이지/블록 로드 + 저장 관리
  */
 export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
   const { data: session } = useSession();
-  const [ready, setReady] = useState(false);
   const [title, setTitle] = useState(pageTitle);
+  const [initialBlocks, setInitialBlocks] = useState<PartialBlock[] | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showChat, setShowChat] = useState(false);
@@ -35,12 +71,48 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
     return token ? { Authorization: `Bearer ${token}` } : {};
   }, [session]);
 
-  // 세션 준비 완료 시 에디터 표시
+  // 페이지 데이터 + 블록 로드
   useEffect(() => {
-    if (session !== undefined) {
-      setReady(true);
+    const token = (session as { accessToken?: string } | null)?.accessToken;
+    if (!token) return;
+
+    let cancelled = false;
+
+    async function load() {
+      try {
+        // 페이지 정보 조회 (title, icon)
+        const pageRes = await fetch(`${apiUrl}/pages/${pageId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!cancelled && pageRes.ok) {
+          const page = await pageRes.json();
+          setTitle(page.title || "");
+        }
+
+        // 블록 목록 조회
+        const blocksRes = await fetch(`${apiUrl}/blocks?page_id=${pageId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (cancelled) return;
+        if (blocksRes.ok) {
+          const data = (await blocksRes.json()) as { blocks: BackendBlock[] };
+          setInitialBlocks(backendBlocksToPartial(data.blocks));
+        } else {
+          setInitialBlocks([]);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error("페이지 로드 실패:", err);
+          setInitialBlocks([]);
+        }
+      }
     }
-  }, [session]);
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [pageId, session, apiUrl]);
 
   // 블록 저장
   const handleSave = useCallback(
@@ -51,9 +123,7 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
       setError(null);
 
       try {
-        // BlockNote Block → 백엔드 형식 변환
         const blocksData = editorBlocks.map((block, index) => {
-          // block.content 타입이 블록 종류마다 다르므로 unknown으로 캐스팅 후 처리
           const rawContent: unknown = block.content;
           let textItems: Array<{ text: string }>;
 
@@ -96,11 +166,10 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
     [pageId, session, apiUrl, authHeaders],
   );
 
-  // 타이틀 저장 (디바운스 없이 blur/enter 시 저장)
+  // 타이틀 저장 (blur/enter 시)
   const handleTitleSave = useCallback(
     async (newTitle: string) => {
       if (!session) return;
-
       try {
         await fetch(`${apiUrl}/pages/${pageId}`, {
           method: "PATCH",
@@ -117,8 +186,8 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
     [pageId, session, apiUrl, authHeaders],
   );
 
-  // 에디터 준비 중
-  if (!ready) {
+  // 로딩 중 — 세션 또는 블록이 아직 준비되지 않음
+  if (session === undefined || initialBlocks === null) {
     return (
       <div className="flex items-center justify-center p-12">
         <div className="text-gray-400">로딩 중...</div>
@@ -128,7 +197,6 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
 
   return (
     <div className="flex h-full">
-      {/* 메인 에디터 영역 */}
       <div className="mx-auto flex-1 max-w-4xl p-6">
         {/* 페이지 타이틀 */}
         <input
@@ -161,38 +229,33 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
             💬 AI 질문
           </button>
 
-          {/* YouTube 임베드 삽입 */}
           <YouTubeEmbed
             onInsert={(embedUrl) =>
               setYoutubeEmbeds((prev) => [...prev, embedUrl])
             }
           />
 
-          {/* 저장 상태 표시 */}
           <div className="ml-auto flex items-center gap-2 text-xs text-gray-400">
             {saving && <span>저장 중...</span>}
             {error && <span className="text-red-500">{error}</span>}
           </div>
         </div>
 
-        {/* BlockNote 에디터 */}
+        {/* BlockNote 에디터 — pageId가 바뀌면 재마운트하여 새 initialContent 적용 */}
         <BlockEditor
+          key={pageId}
           pageId={pageId}
+          initialBlocks={initialBlocks.length > 0 ? initialBlocks : undefined}
           onSave={handleSave}
         />
 
-        {/* 삽입된 YouTube 동영상 */}
         {youtubeEmbeds.map((embedUrl, index) => (
           <YouTubePlayer key={index} embedUrl={embedUrl} />
         ))}
       </div>
 
-      {/* AI 질문 사이드 패널 */}
       {showChat && (
-        <AIChatPanel
-          pageId={pageId}
-          onClose={() => setShowChat(false)}
-        />
+        <AIChatPanel pageId={pageId} onClose={() => setShowChat(false)} />
       )}
     </div>
   );
