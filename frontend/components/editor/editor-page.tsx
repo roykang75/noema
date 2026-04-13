@@ -2,9 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
-import { Block, PartialBlock } from "@blocknote/core";
-import BlockEditor from "./block-editor";
-import { YouTubePlayer } from "./youtube-embed";
+import BlockEditor, { type NoemaEditor } from "./block-editor";
 import SummarizeButton from "@/components/ai/summarize-button";
 import AIChatPanel from "@/components/ai/ai-chat-panel";
 
@@ -14,7 +12,7 @@ interface EditorPageProps {
 }
 
 /**
- * YouTube URL에서 video ID를 추출. 매칭 실패 시 null 반환.
+ * YouTube URL에서 video ID 추출. 매칭 실패 시 null.
  */
 function extractYouTubeId(text: string): string | null {
   const trimmed = text.trim();
@@ -30,100 +28,81 @@ function extractYouTubeId(text: string): string | null {
 interface BackendBlock {
   id: string;
   type?: string;
-  content?: {
-    text?: Array<{ text?: string }>;
-  } | null;
+  content?:
+    | {
+        text?: Array<{ text?: string }>;
+        props?: Record<string, unknown>;
+      }
+    | null;
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SchemaBlock = any;
 
 /**
  * 백엔드 블록 → BlockNote PartialBlock 변환
- * 저장된 content.text[].text를 합쳐서 하나의 텍스트 문자열로 복원합니다.
  */
-function backendBlocksToPartial(blocks: BackendBlock[]): PartialBlock[] {
+function backendBlocksToPartial(blocks: BackendBlock[]): SchemaBlock[] {
+  // 미디어 블록은 content 없이 props로만 렌더링됨
+  const mediaTypes = new Set(["image", "video", "audio", "file"]);
+  // 지원하는 텍스트 블록
+  const textTypes = new Set([
+    "paragraph",
+    "heading",
+    "bulletListItem",
+    "numberedListItem",
+    "checkListItem",
+    "quote",
+    "codeBlock",
+  ]);
+
   return blocks.map((block) => {
+    const rawType = block.type ?? "paragraph";
+
+    // 이미지/비디오/오디오/파일 블록 — props 복원
+    if (mediaTypes.has(rawType)) {
+      return {
+        type: rawType,
+        props: block.content?.props ?? {},
+      } as SchemaBlock;
+    }
+
+    // 텍스트 블록
+    const type = textTypes.has(rawType) ? rawType : "paragraph";
     const text =
       block.content?.text?.map((t) => t.text ?? "").join("") ?? "";
-    // BlockNote의 내장 블록 타입만 사용. 알 수 없는 타입은 paragraph로 폴백.
-    const rawType = block.type ?? "paragraph";
-    const supportedTypes = new Set([
-      "paragraph",
-      "heading",
-      "bulletListItem",
-      "numberedListItem",
-      "checkListItem",
-      "quote",
-      "codeBlock",
-    ]);
-    const type = supportedTypes.has(rawType) ? rawType : "paragraph";
+
     return {
-      type: type as PartialBlock["type"],
+      type,
       content: text,
-    } as PartialBlock;
+    } as SchemaBlock;
   });
 }
 
-/**
- * 에디터 페이지 — 페이지/블록 로드 + 저장 관리
- */
 export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
   const { data: session } = useSession();
   const [title, setTitle] = useState(pageTitle);
-  const [initialBlocks, setInitialBlocks] = useState<PartialBlock[] | null>(null);
+  const [initialBlocks, setInitialBlocks] = useState<SchemaBlock[] | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showChat, setShowChat] = useState(false);
-  const [youtubeEmbeds, setYoutubeEmbeds] = useState<string[]>([]);
-  const editorContainerRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<NoemaEditor | null>(null);
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-  // YouTube URL 자동 감지 — document 레벨 capture로 ProseMirror보다 먼저 가로챔
-  useEffect(() => {
-    const handlePaste = (e: ClipboardEvent) => {
-      const container = editorContainerRef.current;
-      if (!container) return;
-      // 에디터 영역 내부에서 붙여넣은 경우만 처리
-      const target = e.target as Node | null;
-      if (!target || !container.contains(target)) return;
-
-      const pasted = e.clipboardData?.getData("text/plain") ?? "";
-      const videoId = extractYouTubeId(pasted);
-      if (!videoId) return;
-
-      // ProseMirror를 포함한 모든 리스너 차단
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-
-      setYoutubeEmbeds((prev) => [
-        ...prev,
-        `https://www.youtube.com/embed/${videoId}`,
-      ]);
-    };
-
-    // document + capture + 최우선 실행을 위해 stopImmediatePropagation 사용
-    document.addEventListener("paste", handlePaste, { capture: true });
-    return () => {
-      document.removeEventListener("paste", handlePaste, { capture: true });
-    };
-  }, []);
-
-  // 인증 헤더 생성 헬퍼
   const authHeaders = useCallback((): Record<string, string> => {
     const token = (session as { accessToken?: string } | null)?.accessToken;
     return token ? { Authorization: `Bearer ${token}` } : {};
   }, [session]);
 
-  // 페이지 데이터 + 블록 로드
+  // 페이지/블록 로드
   useEffect(() => {
     const token = (session as { accessToken?: string } | null)?.accessToken;
     if (!token) return;
 
     let cancelled = false;
-
     async function load() {
       try {
-        // 페이지 정보 조회 (title, icon)
         const pageRes = await fetch(`${apiUrl}/pages/${pageId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -132,7 +111,6 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
           setTitle(page.title || "");
         }
 
-        // 블록 목록 조회
         const blocksRes = await fetch(`${apiUrl}/blocks?page_id=${pageId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -150,26 +128,87 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
         }
       }
     }
-
     load();
     return () => {
       cancelled = true;
     };
   }, [pageId, session, apiUrl]);
 
-  // 블록 저장
+  // YouTube URL 자동 감지 — document 레벨 capture로 ProseMirror보다 먼저 실행
+  // 커서 위치에 이미지 블록(YouTube 썸네일 + 원본 URL 캡션)을 삽입
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const editor = editorRef.current;
+      if (!editor) return;
+
+      const pasted = e.clipboardData?.getData("text/plain") ?? "";
+      const videoId = extractYouTubeId(pasted);
+      if (!videoId) return;
+
+      // 에디터 내부에서 붙여넣은 경우만 처리
+      const target = e.target as HTMLElement | null;
+      const editorDom = document.querySelector(".bn-container");
+      if (!editorDom || !target || !editorDom.contains(target)) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+
+      // BlockNote 기본 image 블록으로 YouTube 썸네일 삽입
+      const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+      const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+      const cursor = editor.getTextCursorPosition();
+      editor.insertBlocks(
+        [
+          {
+            type: "image",
+            props: {
+              url: thumbnailUrl,
+              caption: watchUrl,
+            },
+          },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ] as any,
+        cursor.block,
+        "after",
+      );
+    };
+
+    document.addEventListener("paste", handlePaste, { capture: true });
+    return () => {
+      document.removeEventListener("paste", handlePaste, { capture: true });
+    };
+  }, []);
+
+  // 블록 저장 — 기본 블록은 text, YouTube 블록은 videoId 저장
   const handleSave = useCallback(
-    async (editorBlocks: Block[]) => {
+    async (editorBlocks: unknown[]) => {
       if (!session) return;
 
       setSaving(true);
       setError(null);
 
       try {
-        const blocksData = editorBlocks.map((block, index) => {
+        const mediaTypes = new Set(["image", "video", "audio", "file"]);
+
+        const blocksData = (editorBlocks as Array<{
+          type: string;
+          content?: unknown;
+          props?: Record<string, unknown>;
+        }>).map((block, index) => {
+          // 미디어 블록 — props만 저장 (url, caption 등)
+          if (mediaTypes.has(block.type)) {
+            return {
+              page_id: pageId,
+              type: block.type,
+              content: { props: block.props ?? {} },
+              order: index,
+            };
+          }
+
+          // 텍스트 블록 — content 문자열 추출
           const rawContent: unknown = block.content;
           let textItems: Array<{ text: string }>;
-
           if (Array.isArray(rawContent)) {
             textItems = rawContent.map((item: unknown) => ({
               text:
@@ -209,7 +248,6 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
     [pageId, session, apiUrl, authHeaders],
   );
 
-  // 타이틀 저장 (blur/enter 시)
   const handleTitleSave = useCallback(
     async (newTitle: string) => {
       if (!session) return;
@@ -229,7 +267,6 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
     [pageId, session, apiUrl, authHeaders],
   );
 
-  // 로딩 중 — 세션 또는 블록이 아직 준비되지 않음
   if (session === undefined || initialBlocks === null) {
     return (
       <div className="flex items-center justify-center p-12">
@@ -241,7 +278,6 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
   return (
     <div className="flex h-full">
       <div className="mx-auto flex-1 max-w-4xl p-6">
-        {/* 페이지 타이틀 */}
         <input
           type="text"
           value={title}
@@ -258,7 +294,6 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
           className="mb-4 w-full border-none bg-transparent text-3xl font-bold text-gray-900 placeholder-gray-300 outline-none"
         />
 
-        {/* AI 툴바 */}
         <div className="mb-3 flex items-center gap-3">
           <SummarizeButton pageId={pageId} />
           <button
@@ -278,21 +313,15 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
           </div>
         </div>
 
-        {/* BlockNote 에디터 — pageId가 바뀌면 재마운트하여 새 initialContent 적용
-            ref 컨테이너에 capture phase로 paste 이벤트 가로채기 —
-            ProseMirror가 처리하기 전에 YouTube URL 감지 */}
-        <div ref={editorContainerRef}>
-          <BlockEditor
-            key={pageId}
-            pageId={pageId}
-            initialBlocks={initialBlocks.length > 0 ? initialBlocks : undefined}
-            onSave={handleSave}
-          />
-        </div>
-
-        {youtubeEmbeds.map((embedUrl, index) => (
-          <YouTubePlayer key={index} embedUrl={embedUrl} />
-        ))}
+        <BlockEditor
+          key={pageId}
+          pageId={pageId}
+          initialBlocks={initialBlocks.length > 0 ? initialBlocks : undefined}
+          onSave={handleSave}
+          onEditorReady={(editor) => {
+            editorRef.current = editor;
+          }}
+        />
       </div>
 
       {showChat && (
