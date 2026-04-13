@@ -259,7 +259,7 @@ function EmbedLayout({
 }: LayoutProps & { playing: boolean; setPlaying: (v: boolean) => void }) {
   // breakout은 outer wrapper(YouTubeCard)에서 처리 — 선택 outline이 카드 크기와 정확히 일치하도록
   return (
-    <div className="my-2 w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
       <div className="relative aspect-video w-full bg-black">
         {playing ? (
           <iframe
