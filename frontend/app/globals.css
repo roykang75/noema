@@ -52,6 +52,62 @@ body {
     -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Segoe UI",
     "Malgun Gothic", "Pretendard Variable", Pretendard, sans-serif;
 }
+
+/* 2-컬럼 레이아웃 (카테고리 + 항목) */
+.noema-slash-menu--split {
+  display: flex;
+  gap: 4px;
+  padding: 6px;
+  min-width: 460px;
+  overflow: visible;
+  max-height: 420px;
+}
+.noema-slash-categories {
+  flex: 0 0 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border-right: 1px solid rgba(0, 0, 0, 0.06);
+  padding-right: 4px;
+  overflow-y: auto;
+}
+.noema-slash-category {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #1f2937;
+  text-align: left;
+  transition: background-color 0.1s;
+}
+.noema-slash-category:hover,
+.noema-slash-category[data-active] {
+  background: rgba(0, 0, 0, 0.06);
+}
+.noema-slash-category-label {
+  flex: 1;
+  font-weight: 500;
+}
+.noema-slash-chevron {
+  color: #9ca3af;
+  font-size: 14px;
+}
+.noema-slash-items {
+  flex: 1;
+  min-width: 0;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-left: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
 .noema-slash-section {
   padding: 2px 0;
 }
