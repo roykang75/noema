@@ -6,6 +6,7 @@ import {
   defaultBlockSpecs,
   filterSuggestionItems,
 } from "@blocknote/core";
+import { ko } from "@blocknote/core/locales";
 import {
   SideMenu,
   SideMenuController,
@@ -62,6 +63,7 @@ export default function BlockEditor({
 
   const editor = useCreateBlockNote({
     schema: noemaSchema,
+    dictionary: ko,
     initialContent:
       initialBlocks && initialBlocks.length > 0 ? initialBlocks : undefined,
     uploadFile: async (file: File) => {
