@@ -147,10 +147,9 @@ export default function PageMoreMenu({
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false); // 애니메이션 트리거
 
-  // 폰트 선택 (기본/세리프/모노)
-  const [font, setFont] = useState<"default" | "serif" | "mono">("default");
-
-  // 전체 너비/작은 텍스트 — 에디터에 실제 반영되므로 전역 스토어 사용
+  // 폰트/전체 너비/작은 텍스트 — 에디터에 실제 반영되므로 전역 스토어 사용
+  const font = usePageViewStore((s) => s.font);
+  const setFont = usePageViewStore((s) => s.setFont);
   const fullWidth = usePageViewStore((s) => s.fullWidth);
   const setFullWidth = usePageViewStore((s) => s.setFullWidth);
   const smallText = usePageViewStore((s) => s.smallText);

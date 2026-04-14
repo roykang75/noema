@@ -114,6 +114,9 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
   const closeChat = useAIChatStore((s) => s.close);
   const fullWidth = usePageViewStore((s) => s.fullWidth);
   const smallText = usePageViewStore((s) => s.smallText);
+  const font = usePageViewStore((s) => s.font);
+  const fontClass =
+    font === "serif" ? "font-serif" : font === "mono" ? "font-mono" : "font-sans";
   const editorRef = useRef<NoemaEditor | null>(null);
   const [editorReady, setEditorReady] = useState(false);
 
@@ -355,7 +358,7 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
             전체 너비(fullWidth) / 작은 텍스트(smallText) 토글 반영 */}
         <div className="flex-1 overflow-auto">
           <div
-            className={`mx-auto p-6 ${
+            className={`mx-auto p-6 ${fontClass} ${
               fullWidth ? "max-w-none" : "max-w-4xl"
             } ${smallText ? "text-sm" : ""}`}
           >
