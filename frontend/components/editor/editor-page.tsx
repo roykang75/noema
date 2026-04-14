@@ -122,7 +122,7 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
       ? `Georgia, "Times New Roman", serif`
       : font === "mono"
         ? `var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace`
-        : `var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif`;
+        : `"Pretendard Variable", Pretendard, var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif`;
   const editorRef = useRef<NoemaEditor | null>(null);
   const [editorReady, setEditorReady] = useState(false);
 

@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+/* Pretendard는 app/layout.tsx에서 <link>로 로드 (CSS @import 순서 제약 회피) */
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -37,14 +39,14 @@ body {
 [data-font="default"] .bn-editor,
 [data-font="default"] .bn-default-styles,
 [data-font="default"] .bn-default-styles * {
-  --bn-font-family: var(--font-geist-sans), ui-sans-serif, system-ui,
-    -apple-system, sans-serif;
-  --mantine-font-family: var(--font-geist-sans), ui-sans-serif, system-ui,
-    -apple-system, sans-serif;
-  --mantine-font-family-headings: var(--font-geist-sans), ui-sans-serif,
-    system-ui, -apple-system, sans-serif;
-  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
-    sans-serif;
+  --bn-font-family: "Pretendard Variable", Pretendard, var(--font-geist-sans),
+    ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --mantine-font-family: "Pretendard Variable", Pretendard, var(--font-geist-sans),
+    ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --mantine-font-family-headings: "Pretendard Variable", Pretendard,
+    var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-family: "Pretendard Variable", Pretendard, var(--font-geist-sans),
+    ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
 [data-font="serif"] .bn-mantine,
