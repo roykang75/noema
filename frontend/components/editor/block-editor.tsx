@@ -1,10 +1,16 @@
 "use client";
 
 import { useEffect } from "react";
-import { BlockNoteSchema, defaultBlockSpecs } from "@blocknote/core";
+import {
+  BlockNoteSchema,
+  defaultBlockSpecs,
+  filterSuggestionItems,
+} from "@blocknote/core";
 import {
   SideMenu,
   SideMenuController,
+  SuggestionMenuController,
+  getDefaultReactSlashMenuItems,
   useCreateBlockNote,
 } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
@@ -12,6 +18,7 @@ import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
 import { youtubeBlockSpec } from "./youtube-block";
 import { CustomDragHandleMenu } from "./custom-drag-handle-menu";
+import { CustomSlashMenu } from "./custom-slash-menu";
 import { useBlockSelectionStore } from "@/lib/stores/block-selection-store";
 import { useEditorInstanceStore } from "@/lib/stores/editor-instance-store";
 
@@ -132,11 +139,23 @@ export default function BlockEditor({
         editable={!readOnly}
         theme="light"
         sideMenu={false}
+        slashMenu={false}
       >
         <SideMenuController
           sideMenu={(props) => (
             <SideMenu {...props} dragHandleMenu={CustomDragHandleMenu} />
           )}
+        />
+        {/* 커스텀 슬래시 메뉴 — 그룹별 섹션 + 아이콘 */}
+        <SuggestionMenuController
+          triggerCharacter="/"
+          getItems={async (query) =>
+            filterSuggestionItems(
+              getDefaultReactSlashMenuItems(editor),
+              query,
+            )
+          }
+          suggestionMenuComponent={CustomSlashMenu}
         />
       </BlockNoteView>
     </div>
