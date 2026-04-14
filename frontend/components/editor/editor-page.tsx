@@ -383,7 +383,8 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
             }
           }}
           placeholder="제목 없음"
-          className="mb-4 w-full border-none bg-transparent text-3xl font-bold text-gray-900 placeholder-gray-300 outline-none"
+          /* BlockNote .bn-editor가 padding-inline: 54px를 가지므로 동일한 시작선에 맞춤 */
+          className="mb-4 w-full border-none bg-transparent px-[54px] text-3xl font-bold text-gray-900 placeholder-gray-300 outline-none"
         />
 
         {/* 저장 상태 표시 */}
