@@ -39,14 +39,20 @@ body {
 [data-font="default"] .bn-editor,
 [data-font="default"] .bn-default-styles,
 [data-font="default"] .bn-default-styles * {
-  --bn-font-family: "Pretendard Variable", Pretendard, var(--font-geist-sans),
-    ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --mantine-font-family: "Pretendard Variable", Pretendard, var(--font-geist-sans),
-    ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --mantine-font-family-headings: "Pretendard Variable", Pretendard,
-    var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
-  font-family: "Pretendard Variable", Pretendard, var(--font-geist-sans),
-    ui-sans-serif, system-ui, -apple-system, sans-serif;
+  /* 시스템 폰트 우선 (macOS: SF Pro + Apple SD Gothic Neo, Windows: Segoe + Malgun Gothic)
+     폴백: Pretendard Variable (한글/영문 통일) → Geist → sans-serif */
+  --bn-font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+    "Segoe UI", "Malgun Gothic", "Pretendard Variable", Pretendard,
+    var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --mantine-font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+    "Segoe UI", "Malgun Gothic", "Pretendard Variable", Pretendard,
+    var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --mantine-font-family-headings: -apple-system, BlinkMacSystemFont,
+    "Apple SD Gothic Neo", "Segoe UI", "Malgun Gothic", "Pretendard Variable",
+    Pretendard, var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+    "Segoe UI", "Malgun Gothic", "Pretendard Variable", Pretendard,
+    var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
 [data-font="serif"] .bn-mantine,
