@@ -34,6 +34,17 @@ body {
  * - data-font 속성을 기준으로 .bn-mantine 및 .bn-container 내부 변수를 덮어쓴다.
  * - Specificity: [data-font="x"] .bn-mantine > .bn-mantine
  */
+/* BlockNote 전역 오버라이드 — 모든 폰트 모드 공통
+   · font-feature-settings: "liga" 0 → 합자 활성화 복원
+   · -webkit-font-smoothing: auto → macOS 네이티브 렌더링 */
+.bn-editor,
+.bn-default-styles,
+.bn-default-styles * {
+  font-feature-settings: normal !important;
+  -webkit-font-smoothing: auto !important;
+  -moz-osx-font-smoothing: auto !important;
+}
+
 [data-font="default"] .bn-mantine,
 [data-font="default"] .bn-container,
 [data-font="default"] .bn-editor,
