@@ -364,17 +364,11 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
             전체 너비(fullWidth) / 작은 텍스트(smallText) 토글 반영 */}
         <div className="flex-1 overflow-auto">
           <div
+            data-font={font}
             className={`mx-auto p-6 ${
               fullWidth ? "max-w-none" : "max-w-4xl"
             } ${smallText ? "text-sm" : ""}`}
-            style={
-              {
-                fontFamily: fontStack,
-                // BlockNote (Mantine) 내부 폰트 변수 오버라이드
-                "--bn-font-family": fontStack,
-                "--mantine-font-family": fontStack,
-              } as React.CSSProperties
-            }
+            style={{ fontFamily: fontStack }}
           >
         <input
           type="text"

@@ -24,3 +24,51 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/**
+ * BlockNote/Mantine 폰트 오버라이드
+ * - Mantine/BlockNote는 --bn-font-family, --mantine-font-family를 .bn-mantine 에서 재정의하므로
+ *   부모 wrapper의 inline style만으로는 전달되지 않음.
+ * - data-font 속성을 기준으로 .bn-mantine 및 .bn-container 내부 변수를 덮어쓴다.
+ * - Specificity: [data-font="x"] .bn-mantine > .bn-mantine
+ */
+[data-font="default"] .bn-mantine,
+[data-font="default"] .bn-container,
+[data-font="default"] .bn-editor,
+[data-font="default"] .bn-default-styles,
+[data-font="default"] .bn-default-styles * {
+  --bn-font-family: var(--font-geist-sans), ui-sans-serif, system-ui,
+    -apple-system, sans-serif;
+  --mantine-font-family: var(--font-geist-sans), ui-sans-serif, system-ui,
+    -apple-system, sans-serif;
+  --mantine-font-family-headings: var(--font-geist-sans), ui-sans-serif,
+    system-ui, -apple-system, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
+    sans-serif;
+}
+
+[data-font="serif"] .bn-mantine,
+[data-font="serif"] .bn-container,
+[data-font="serif"] .bn-editor,
+[data-font="serif"] .bn-default-styles,
+[data-font="serif"] .bn-default-styles * {
+  --bn-font-family: Georgia, "Times New Roman", serif;
+  --mantine-font-family: Georgia, "Times New Roman", serif;
+  --mantine-font-family-headings: Georgia, "Times New Roman", serif;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+[data-font="mono"] .bn-mantine,
+[data-font="mono"] .bn-container,
+[data-font="mono"] .bn-editor,
+[data-font="mono"] .bn-default-styles,
+[data-font="mono"] .bn-default-styles * {
+  --bn-font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo,
+    monospace;
+  --mantine-font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular,
+    Menlo, monospace;
+  --mantine-font-family-headings: var(--font-geist-mono), ui-monospace,
+    SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo,
+    monospace;
+}
