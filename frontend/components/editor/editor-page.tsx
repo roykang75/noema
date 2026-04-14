@@ -115,8 +115,14 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
   const fullWidth = usePageViewStore((s) => s.fullWidth);
   const smallText = usePageViewStore((s) => s.smallText);
   const font = usePageViewStore((s) => s.font);
-  const fontClass =
-    font === "serif" ? "font-serif" : font === "mono" ? "font-mono" : "font-sans";
+  // BlockNote는 --bn-font-family CSS 변수로 폰트를 제어하므로 이 변수를 오버라이드해야
+  // 에디터 본문도 변경됨. fontFamily도 함께 지정해 제목/주변 UI에도 적용.
+  const fontStack =
+    font === "serif"
+      ? `Georgia, "Times New Roman", serif`
+      : font === "mono"
+        ? `var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace`
+        : `var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif`;
   const editorRef = useRef<NoemaEditor | null>(null);
   const [editorReady, setEditorReady] = useState(false);
 
@@ -358,9 +364,17 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
             전체 너비(fullWidth) / 작은 텍스트(smallText) 토글 반영 */}
         <div className="flex-1 overflow-auto">
           <div
-            className={`mx-auto p-6 ${fontClass} ${
+            className={`mx-auto p-6 ${
               fullWidth ? "max-w-none" : "max-w-4xl"
             } ${smallText ? "text-sm" : ""}`}
+            style={
+              {
+                fontFamily: fontStack,
+                // BlockNote (Mantine) 내부 폰트 변수 오버라이드
+                "--bn-font-family": fontStack,
+                "--mantine-font-family": fontStack,
+              } as React.CSSProperties
+            }
           >
         <input
           type="text"
