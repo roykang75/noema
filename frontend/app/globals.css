@@ -57,9 +57,8 @@ body {
    블록 드래그 핸들 메뉴의 하위 메뉴처럼, 서브메뉴가 카테고리 패널과
    시각적으로 분리된 독립 팝오버로 보이도록 우측에 간격(margin) + 자체 배경/그림자 */
 .noema-slash-menu--split {
-  display: flex;
-  align-items: flex-start;
-  gap: 0;
+  position: relative;
+  display: block;
   padding: 0;
   background: transparent;
   border: none;
@@ -68,6 +67,8 @@ body {
   min-width: 0;
   overflow: visible;
   max-height: none;
+  /* 좌측 카테고리(180px) + gap(6px) + 서브메뉴(최대 320px) — 위치 고정 */
+  width: 180px;
 }
 .noema-slash-categories {
   flex: 0 0 180px;
@@ -113,12 +114,12 @@ body {
   font-size: 14px;
 }
 .noema-slash-items {
-  flex: 0 0 auto;
-  min-width: 260px;
-  max-width: 320px;
+  position: absolute;
+  top: 0;
+  left: calc(100% + 6px);
+  width: 280px;
   max-height: 420px;
   overflow-y: auto;
-  margin-left: 6px;
   padding: 6px;
   display: flex;
   flex-direction: column;
