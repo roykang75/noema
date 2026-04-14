@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { usePageStore } from "@/lib/stores/page-store";
 import { useWorkspaceStore } from "@/lib/stores/workspace-store";
 import PageIcon from "@/components/sidebar/page-icon";
+import PageMoreMenu from "./page-more-menu";
 import type { Page } from "@/types";
 
 interface PageHeaderProps {
@@ -28,6 +29,7 @@ export default function PageHeader({
   const { pages } = usePageStore();
   const { currentWorkspace } = useWorkspaceStore();
   const [starred, setStarred] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   // 상위 페이지 체인 구성 (현재 → 루트)
   const trail: Page[] = [];
@@ -140,18 +142,27 @@ export default function PageHeader({
           </svg>
         </button>
 
-        {/* 더보기 */}
-        <button
-          className={iconBtn}
-          title="더보기 (추후 구현)"
-          aria-label="더보기"
-        >
-          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
-            <circle cx="5" cy="12" r="1.8" />
-            <circle cx="12" cy="12" r="1.8" />
-            <circle cx="19" cy="12" r="1.8" />
-          </svg>
-        </button>
+        {/* 더보기 — 클릭 시 드롭다운 메뉴 */}
+        <div className="relative">
+          <button
+            onClick={() => setMoreOpen((v) => !v)}
+            className={iconBtn}
+            title="더보기"
+            aria-label="더보기"
+            aria-expanded={moreOpen}
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
+              <circle cx="5" cy="12" r="1.8" />
+              <circle cx="12" cy="12" r="1.8" />
+              <circle cx="19" cy="12" r="1.8" />
+            </svg>
+          </button>
+          {moreOpen && (
+            <div className="absolute right-0 top-full z-50 mt-1">
+              <PageMoreMenu onClose={() => setMoreOpen(false)} />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
