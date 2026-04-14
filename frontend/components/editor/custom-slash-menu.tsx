@@ -77,8 +77,9 @@ export function CustomSlashMenu(props: SuggestionMenuProps<Item>) {
   const currentSection = sections[catIdx];
   const currentItems = currentSection?.items ?? [];
 
-  // 쿼리 변경(items 변동)으로 섹션 구조가 바뀌면 상태 리셋
-  useEffect(() => {
+  // 메뉴가 새로 열리거나 쿼리가 바뀌면 상태 리셋 — 페인트 전에 동기 실행해
+  // 이전 선택 상태가 잠깐이라도 보이지 않도록 useLayoutEffect 사용
+  useLayoutEffect(() => {
     setFocus("cat");
     setCatIdx(0);
     setItemIdx(0);
