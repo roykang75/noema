@@ -45,7 +45,7 @@ interface PageMoreMenuProps {
   lastEditedAt?: string;
 }
 
-/** 메뉴 행 */
+/** 메뉴 행 — 버튼 타입 (클릭 액션) */
 function MenuItem({
   icon,
   label,
@@ -77,32 +77,60 @@ function MenuItem({
   );
 }
 
-/** 토글 스위치 (placeholder — 로컬 state만) */
-function ToggleSwitch({
+/**
+ * 토글 메뉴 행 — 행 전체 클릭 또는 스위치 클릭으로 토글
+ * <button> 중첩 방지를 위해 wrapper는 <div role="button">로 구현
+ */
+function ToggleMenuItem({
+  icon,
+  label,
   on,
   onChange,
 }: {
+  icon: React.ReactNode;
+  label: string;
   on: boolean;
   onChange: (v: boolean) => void;
 }) {
+  const toggle = () => onChange(!on);
   return (
-    <button
-      type="button"
-      onClick={(e) => {
-        e.stopPropagation();
-        onChange(!on);
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={toggle}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          toggle();
+        }
       }}
-      className={`relative h-4 w-7 flex-shrink-0 rounded-full transition-colors ${
+      className="flex w-full cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm text-gray-800 transition-colors hover:bg-gray-100"
+    >
+      <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center text-gray-500">
+        {icon}
+      </span>
+      <span className="flex-1 truncate">{label}</span>
+      <ToggleSwitch on={on} />
+    </div>
+  );
+}
+
+/** 시각적 토글 스위치 — 클릭은 상위 ToggleMenuItem에서 처리 */
+function ToggleSwitch({ on }: { on: boolean }) {
+  return (
+    <span
+      role="switch"
+      aria-checked={on}
+      className={`relative inline-flex h-[18px] w-8 flex-shrink-0 items-center rounded-full transition-colors ${
         on ? "bg-blue-600" : "bg-gray-300"
       }`}
-      aria-pressed={on}
     >
       <span
-        className={`absolute top-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform ${
-          on ? "translate-x-3.5" : "translate-x-0.5"
+        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm ring-1 ring-black/5 transition-transform ${
+          on ? "translate-x-[16px]" : "translate-x-[2px]"
         }`}
       />
-    </button>
+    </span>
   );
 }
 
@@ -208,30 +236,34 @@ export default function PageMoreMenu({
       <Divider />
 
       {/* 토글 그룹 */}
-      <MenuItem
+      <ToggleMenuItem
         icon={<WifiOff size={14} />}
         label="오프라인에서 사용 가능"
-        trailing={<ToggleSwitch on={offline} onChange={setOffline} />}
+        on={offline}
+        onChange={setOffline}
       />
-      <MenuItem
+      <ToggleMenuItem
         icon={<AlignLeft size={14} />}
         label="작은 텍스트"
-        trailing={<ToggleSwitch on={smallText} onChange={setSmallText} />}
+        on={smallText}
+        onChange={setSmallText}
       />
-      <MenuItem
+      <ToggleMenuItem
         icon={<ArrowLeftRight size={14} />}
         label="전체 너비"
-        trailing={<ToggleSwitch on={fullWidth} onChange={setFullWidth} />}
+        on={fullWidth}
+        onChange={setFullWidth}
       />
       <MenuItem icon={<Sliders size={14} />} label="페이지 사용자 지정" />
 
       <Divider />
 
       {/* 페이지 잠금 / AI / 번역 / 실행취소 */}
-      <MenuItem
+      <ToggleMenuItem
         icon={<Lock size={14} />}
         label="페이지 잠금"
-        trailing={<ToggleSwitch on={locked} onChange={setLocked} />}
+        on={locked}
+        onChange={setLocked}
       />
       <MenuItem
         icon={<Sparkles size={14} />}
