@@ -1,17 +1,20 @@
 "use client";
 
 /**
- * 커스텀 슬래시(/) 메뉴 — 블록 메뉴와 동일한 패턴
+ * 커스텀 슬래시(/) 메뉴 — 블록 메뉴와 동일한 2-단계 키보드 네비게이션
  *
  * 구조:
- *   · 메인 팝오버(BlockNote 관리): 카테고리 목록만 표시 — 폭 고정(180px)
- *   · 하위 팝오버(React Portal로 document.body): 현재 카테고리의 항목들
- *     → 메인 메뉴의 우측에 절대 위치로 렌더링되어, 호버 시 메인 메뉴
- *       팝오버의 크기가 바뀌지 않음 → Floating UI 리포지션 방지 →
- *       본문 레이아웃이 흔들리지 않음.
+ *   · 메인 팝오버(BlockNote 관리): 카테고리 목록만 — 폭 200px 고정
+ *   · 하위 팝오버(React Portal): 현재 카테고리의 항목들 — 메인 메뉴 우측
  *
- *   · 키보드 네비게이션(selectedIndex)은 BlockNote가 flat 리스트로 관리 —
- *     현재 선택 항목이 속한 카테고리를 자동 오픈.
+ * 키보드 동작(블록 메뉴와 동일):
+ *   · 메뉴가 열리면 focus는 카테고리에 있고, 하위 항목은 선택되지 않음
+ *   · ↑/↓  : 현재 focus(카테고리/항목) 내에서 이동
+ *   · →/Enter : 카테고리 focus일 때 → 하위 항목 focus로 진입 (첫 항목 하이라이트)
+ *   · ←  : 항목 focus일 때 → 카테고리 focus로 복귀 (메뉴 닫지 않음)
+ *   · Enter : 항목 focus일 때 → 항목 삽입
+ *
+ * BlockNote의 기본 키보드 처리는 window capture 단계에서 차단.
  */
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -40,19 +43,23 @@ interface Section {
 }
 
 export function CustomSlashMenu(props: SuggestionMenuProps<Item>) {
-  const { items, selectedIndex, onItemClick, loadingState } = props;
-  const [hoveredGroup, setHoveredGroup] = useState<string | undefined>(undefined);
+  const { items, onItemClick, loadingState } = props;
+
   const mainRef = useRef<HTMLDivElement | null>(null);
   const [submenuPos, setSubmenuPos] = useState<{ top: number; left: number } | null>(
     null,
   );
   const [mounted, setMounted] = useState(false);
 
+  const [focus, setFocus] = useState<"cat" | "item">("cat");
+  const [catIdx, setCatIdx] = useState(0);
+  const [itemIdx, setItemIdx] = useState(0);
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // 그룹별 섹션 (입력 순서 보존)
+  // 그룹별 섹션
   const sections: Section[] = useMemo(() => {
     const result: Section[] = [];
     items.forEach((item) => {
@@ -67,13 +74,69 @@ export function CustomSlashMenu(props: SuggestionMenuProps<Item>) {
     return result;
   }, [items]);
 
-  // 현재 선택된 항목의 그룹 — 자동 오픈
-  const selectedGroup =
-    selectedIndex !== undefined ? items[selectedIndex]?.group : undefined;
-  const openGroup = hoveredGroup ?? selectedGroup ?? sections[0]?.group;
-  const openSection = sections.find((s) => s.group === openGroup);
+  const currentSection = sections[catIdx];
+  const currentItems = currentSection?.items ?? [];
 
-  // 메인 메뉴 우측에 하위 메뉴를 포탈로 띄우기 위한 좌표 계산
+  // 쿼리 변경(items 변동)으로 섹션 구조가 바뀌면 상태 리셋
+  useEffect(() => {
+    setFocus("cat");
+    setCatIdx(0);
+    setItemIdx(0);
+  }, [items]);
+
+  // catIdx 변경 시 itemIdx 범위 보정
+  useEffect(() => {
+    setItemIdx(0);
+  }, [catIdx]);
+
+  // 키보드 — window capture로 BlockNote보다 먼저 가로채기
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const key = e.key;
+      if (
+        key !== "ArrowUp" &&
+        key !== "ArrowDown" &&
+        key !== "ArrowLeft" &&
+        key !== "ArrowRight" &&
+        key !== "Enter"
+      ) {
+        return;
+      }
+      // 에디터 커서 이동 / 메뉴 닫힘 방지
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+
+      if (focus === "cat") {
+        if (key === "ArrowDown") {
+          setCatIdx((i) => Math.min(i + 1, sections.length - 1));
+        } else if (key === "ArrowUp") {
+          setCatIdx((i) => Math.max(i - 1, 0));
+        } else if (key === "ArrowRight" || key === "Enter") {
+          if (currentItems.length > 0) {
+            setFocus("item");
+            setItemIdx(0);
+          }
+        }
+        // ArrowLeft는 카테고리 focus에서는 무시(메뉴 유지)
+      } else {
+        if (key === "ArrowDown") {
+          setItemIdx((i) => Math.min(i + 1, currentItems.length - 1));
+        } else if (key === "ArrowUp") {
+          setItemIdx((i) => Math.max(i - 1, 0));
+        } else if (key === "ArrowLeft") {
+          setFocus("cat");
+        } else if (key === "Enter") {
+          const item = currentItems[itemIdx];
+          if (item) onItemClick?.(item);
+        }
+      }
+    };
+    window.addEventListener("keydown", handler, { capture: true });
+    return () => window.removeEventListener("keydown", handler, { capture: true });
+  }, [focus, sections, currentItems, itemIdx, onItemClick]);
+
+  // 하위 팝오버 위치 계산
   useLayoutEffect(() => {
     if (!mainRef.current) return;
     const update = () => {
@@ -91,7 +154,7 @@ export function CustomSlashMenu(props: SuggestionMenuProps<Item>) {
       window.removeEventListener("scroll", update, true);
       window.removeEventListener("resize", update);
     };
-  }, [openGroup]);
+  }, [catIdx]);
 
   if (loadingState === "loading-initial") {
     return (
@@ -111,15 +174,24 @@ export function CustomSlashMenu(props: SuggestionMenuProps<Item>) {
 
   return (
     <>
-      {/* 메인 — 카테고리 목록만 */}
       <div ref={mainRef} className="noema-slash-menu noema-slash-menu--main">
-        {sections.map((section) => (
+        {sections.map((section, idx) => (
           <button
-            key={section.group ?? "none"}
+            key={section.group ?? `none-${idx}`}
             type="button"
-            onMouseEnter={() => setHoveredGroup(section.group)}
+            onMouseEnter={() => {
+              setFocus("cat");
+              setCatIdx(idx);
+            }}
             onMouseDown={(e) => e.preventDefault()}
-            data-active={openGroup === section.group || undefined}
+            onClick={() => {
+              if (section.items.length > 0) {
+                setFocus("item");
+                setCatIdx(idx);
+                setItemIdx(0);
+              }
+            }}
+            data-active={catIdx === idx || undefined}
             className="noema-slash-category"
           >
             <span className="noema-slash-category-label">
@@ -130,9 +202,8 @@ export function CustomSlashMenu(props: SuggestionMenuProps<Item>) {
         ))}
       </div>
 
-      {/* 하위 — 선택된 카테고리의 항목들. Portal로 분리 → 메인 팝오버 크기 고정 */}
       {mounted &&
-        openSection &&
+        currentSection &&
         submenuPos &&
         createPortal(
           <div
@@ -145,13 +216,20 @@ export function CustomSlashMenu(props: SuggestionMenuProps<Item>) {
             }}
             onMouseDown={(e) => e.preventDefault()}
           >
-            {openSection.items.map((item) => {
-              const globalIdx = items.indexOf(item);
-              const active = globalIdx === selectedIndex;
+            {currentItems.map((item, idx) => {
+              const active = focus === "item" && idx === itemIdx;
               return (
                 <button
-                  key={item.title + globalIdx}
+                  key={item.title + idx}
                   type="button"
+                  onMouseEnter={() => {
+                    setFocus("item");
+                    setItemIdx(idx);
+                  }}
+                  onMouseLeave={() => {
+                    // 마우스가 항목 밖으로 나가면 카테고리 focus로 복귀
+                    setFocus("cat");
+                  }}
                   onClick={() => onItemClick?.(item)}
                   onMouseDown={(e) => e.preventDefault()}
                   data-active={active || undefined}
