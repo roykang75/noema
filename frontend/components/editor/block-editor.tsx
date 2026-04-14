@@ -2,11 +2,16 @@
 
 import { useEffect } from "react";
 import { BlockNoteSchema, defaultBlockSpecs } from "@blocknote/core";
-import { useCreateBlockNote } from "@blocknote/react";
+import {
+  SideMenu,
+  SideMenuController,
+  useCreateBlockNote,
+} from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
 import { youtubeBlockSpec } from "./youtube-block";
+import { CustomDragHandleMenu } from "./custom-drag-handle-menu";
 import { useBlockSelectionStore } from "@/lib/stores/block-selection-store";
 import { useEditorInstanceStore } from "@/lib/stores/editor-instance-store";
 
@@ -121,7 +126,19 @@ export default function BlockEditor({
 
   return (
     <div className="min-h-[500px]">
-      <BlockNoteView editor={editor} editable={!readOnly} theme="light" />
+      {/* sideMenu={false} 로 기본 SideMenu 비활성 후 커스텀 버전 주입 */}
+      <BlockNoteView
+        editor={editor}
+        editable={!readOnly}
+        theme="light"
+        sideMenu={false}
+      >
+        <SideMenuController
+          sideMenu={(props) => (
+            <SideMenu {...props} dragHandleMenu={CustomDragHandleMenu} />
+          )}
+        />
+      </BlockNoteView>
     </div>
   );
 }
