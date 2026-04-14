@@ -53,30 +53,24 @@ body {
     "Malgun Gothic", "Pretendard Variable", Pretendard, sans-serif;
 }
 
-/* 2-컬럼 레이아웃 — 좌측 카테고리 + 우측 "플로팅" 서브메뉴
-   블록 드래그 핸들 메뉴의 하위 메뉴처럼, 서브메뉴가 카테고리 패널과
-   시각적으로 분리된 독립 팝오버로 보이도록 우측에 간격(margin) + 자체 배경/그림자 */
-.noema-slash-menu--split {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  padding: 0;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  backdrop-filter: none;
-  overflow: visible;
-  max-height: none;
-  /* 양쪽 패널 모두 고정 폭 — 호버 시 위치가 움직이지 않도록 */
-  width: 466px;
-  min-width: 466px;
-}
-.noema-slash-categories {
-  flex: 0 0 180px;
+/* 메인 메뉴(--main): 카테고리만 — 폭 고정으로 BlockNote 팝오버 크기 안정화 */
+.noema-slash-menu--main {
+  width: 200px;
+  min-width: 200px;
   display: flex;
   flex-direction: column;
   gap: 1px;
+  max-height: 420px;
+}
+/* 하위 메뉴: Portal로 document.body에 렌더 — 메인 메뉴 우측에 절대 위치 */
+.noema-slash-submenu {
+  width: 280px;
+  max-height: 420px;
+  overflow-y: auto;
   padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
   background: rgba(255, 255, 255, 0.98);
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 12px;
@@ -84,8 +78,9 @@ body {
     0 10px 30px -5px rgba(0, 0, 0, 0.15),
     0 0 0 0.5px rgba(0, 0, 0, 0.05);
   backdrop-filter: blur(20px);
-  max-height: 420px;
-  overflow-y: auto;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Segoe UI",
+    "Malgun Gothic", "Pretendard Variable", Pretendard, sans-serif;
 }
 .noema-slash-category {
   display: flex;
@@ -113,23 +108,6 @@ body {
 .noema-slash-chevron {
   color: #9ca3af;
   font-size: 14px;
-}
-.noema-slash-items {
-  flex: 0 0 280px;
-  width: 280px;
-  max-height: 420px;
-  overflow-y: auto;
-  padding: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  background: rgba(255, 255, 255, 0.98);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
-  box-shadow:
-    0 10px 30px -5px rgba(0, 0, 0, 0.15),
-    0 0 0 0.5px rgba(0, 0, 0, 0.05);
-  backdrop-filter: blur(20px);
 }
 .noema-slash-section {
   padding: 2px 0;
