@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import {
   BlockNoteSchema,
   defaultBlockSpecs,
@@ -79,6 +79,14 @@ export default function BlockEditor({
     },
   });
 
+  // 슬래시 메뉴 items 함수 — 참조 안정화해 items 재로드에 따른
+  // 커스텀 메뉴 상태 리셋 방지
+  const getSlashItems = useCallback(
+    async (query: string) =>
+      filterSuggestionItems(getDefaultReactSlashMenuItems(editor), query),
+    [editor],
+  );
+
   useEffect(() => {
     onEditorReady?.(editor);
     // 하단 툴바가 editor.updateBlock을 호출할 수 있도록 전역 스토어에도 등록
@@ -151,12 +159,7 @@ export default function BlockEditor({
         {/* 커스텀 슬래시 메뉴 — 그룹별 섹션 + 아이콘 */}
         <SuggestionMenuController
           triggerCharacter="/"
-          getItems={async (query) =>
-            filterSuggestionItems(
-              getDefaultReactSlashMenuItems(editor),
-              query,
-            )
-          }
+          getItems={getSlashItems}
           suggestionMenuComponent={CustomSlashMenu}
         />
       </BlockNoteView>

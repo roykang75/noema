@@ -77,12 +77,23 @@ export function CustomSlashMenu(props: SuggestionMenuProps<Item>) {
   const currentSection = sections[catIdx];
   const currentItems = currentSection?.items ?? [];
 
-  // 메뉴가 새로 열리거나 쿼리가 바뀌면 상태 리셋 — 페인트 전에 동기 실행해
-  // 이전 선택 상태가 잠깐이라도 보이지 않도록 useLayoutEffect 사용
+  // 쿼리가 실제로 바뀌어 항목 구성이 달라진 경우에만 리셋.
+  // items 배열 참조만 새로워지는 "무의미한" 변경(부모 리렌더로 인한
+  // useMemo 재계산 등)에는 상태를 건드리지 않음 → 네비 도중 점프 방지.
+  const prevSigRef = useRef<string>("");
   useLayoutEffect(() => {
-    setFocus("cat");
-    setCatIdx(0);
-    setItemIdx(0);
+    const sig =
+      items.length +
+      "|" +
+      (items[0]?.title ?? "") +
+      "|" +
+      (items[items.length - 1]?.title ?? "");
+    if (prevSigRef.current !== sig) {
+      prevSigRef.current = sig;
+      setFocus("cat");
+      setCatIdx(0);
+      setItemIdx(0);
+    }
   }, [items]);
 
   // catIdx 변경 시 itemIdx 범위 보정
