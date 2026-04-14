@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { usePageViewStore } from "@/lib/stores/page-view-store";
 import {
   AlignLeft,
   ArrowLeftRight,
@@ -149,10 +150,14 @@ export default function PageMoreMenu({
   // 폰트 선택 (기본/세리프/모노)
   const [font, setFont] = useState<"default" | "serif" | "mono">("default");
 
-  // 토글 로컬 state (placeholder)
+  // 전체 너비/작은 텍스트 — 에디터에 실제 반영되므로 전역 스토어 사용
+  const fullWidth = usePageViewStore((s) => s.fullWidth);
+  const setFullWidth = usePageViewStore((s) => s.setFullWidth);
+  const smallText = usePageViewStore((s) => s.smallText);
+  const setSmallText = usePageViewStore((s) => s.setSmallText);
+
+  // 아직 연결되지 않은 토글 (placeholder — 로컬 state)
   const [offline, setOffline] = useState(false);
-  const [smallText, setSmallText] = useState(false);
-  const [fullWidth, setFullWidth] = useState(false);
   const [locked, setLocked] = useState(false);
 
   // 다음 tick 에 visible=true → transition 발동

@@ -8,6 +8,7 @@ import PageHeader from "./page-header";
 import AIChatPanel from "@/components/ai/ai-chat-panel";
 import { useAIChatStore } from "@/lib/stores/ai-chat-store";
 import { usePageStore } from "@/lib/stores/page-store";
+import { usePageViewStore } from "@/lib/stores/page-view-store";
 
 interface EditorPageProps {
   pageId: string;
@@ -111,6 +112,8 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
   const [error, setError] = useState<string | null>(null);
   const showChat = useAIChatStore((s) => s.isOpen);
   const closeChat = useAIChatStore((s) => s.close);
+  const fullWidth = usePageViewStore((s) => s.fullWidth);
+  const smallText = usePageViewStore((s) => s.smallText);
   const editorRef = useRef<NoemaEditor | null>(null);
   const [editorReady, setEditorReady] = useState(false);
 
@@ -348,9 +351,14 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
 
       <div className="flex min-h-0 flex-1">
         {/* 스크롤 영역은 전체 폭 — 스크롤바가 항상 화면 오른쪽 끝에 위치
-            콘텐츠는 내부 컨테이너에서 중앙 정렬 + 최대폭 제한 */}
+            콘텐츠는 내부 컨테이너에서 중앙 정렬 + 최대폭 제한
+            전체 너비(fullWidth) / 작은 텍스트(smallText) 토글 반영 */}
         <div className="flex-1 overflow-auto">
-          <div className="mx-auto max-w-4xl p-6">
+          <div
+            className={`mx-auto p-6 ${
+              fullWidth ? "max-w-none" : "max-w-4xl"
+            } ${smallText ? "text-sm" : ""}`}
+          >
         <input
           type="text"
           value={title}
