@@ -347,7 +347,10 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
       <PageHeader pageId={pageId} pageTitle={title} />
 
       <div className="flex min-h-0 flex-1">
-        <div className="mx-auto flex-1 max-w-4xl overflow-auto p-6">
+        {/* 스크롤 영역은 전체 폭 — 스크롤바가 항상 화면 오른쪽 끝에 위치
+            콘텐츠는 내부 컨테이너에서 중앙 정렬 + 최대폭 제한 */}
+        <div className="flex-1 overflow-auto">
+          <div className="mx-auto max-w-4xl p-6">
         <input
           type="text"
           value={title}
@@ -380,6 +383,7 @@ export default function EditorPage({ pageId, pageTitle }: EditorPageProps) {
             setEditorReady(true);
           }}
         />
+          </div>
         </div>
 
         {showChat && (
